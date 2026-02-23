@@ -1,0 +1,28 @@
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backend (Spring Boot / Maven)
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Node / React (Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Coverage
+coverage/
