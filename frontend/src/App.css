@@ -513,3 +513,77 @@ input {
     line-height: 0.96;
   }
 }
+
+.tab-switch-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 40px;
+  margin-top: 20px;
+}
+
+.glass-tab-switch {
+  position: relative;
+  width: min(100%, 460px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.glass-tab-slider {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  width: calc(50% - 6px);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+  transition: transform 0.28s ease;
+  z-index: 1;
+}
+
+.glass-tab-switch.switch-right .glass-tab-slider {
+  transform: translateX(100%);
+}
+
+.glass-tab-option {
+  position: relative;
+  z-index: 2;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 14px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.glass-tab-option.active {
+  color: var(--text);
+  border: 1px solid aliceblue;
+}
+
+.glass-tab-option:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .glass-tab-switch {
+    width: 100%;
+  }
+
+  .glass-tab-option {
+    padding: 13px 10px;
+    font-size: 0.94rem;
+  }
+}

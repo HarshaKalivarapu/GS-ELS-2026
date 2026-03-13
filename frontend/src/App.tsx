@@ -45,6 +45,8 @@ export default function App() {
 
   const tickers = useMemo(() => parseTickers(tickerText), [tickerText]);
 
+  const [activeTab, setActiveTab] = useState<"calculator" | "advanced">("calculator");
+
   useEffect(() => {
     const handleScroll = () => {
       const fadeStart = 120;
@@ -176,146 +178,186 @@ export default function App() {
       </section>
 
       <main id="optimizer-section" className="content-section">
-        <section className="glass-card intro-card">
-          <div className="intro-copy">
-            <p className="eyebrow">Calculator input</p>
-            <h2>Enter mutual funds and investment details</h2>
-            <p className="intro-text">
-              Add one or more mutual fund tickers, then enter your investment
-              amount and time horizon. The total amount is split evenly across
-              the selected funds.
-            </p>
-          </div>
-
-          <div className="form-grid">
-            <label className="field">
-              <span>Mutual fund tickers</span>
-              <input
-                value={tickerText}
-                onChange={(e) => setTickerText(e.target.value)}
-                placeholder="VFIAX FXAIX SWPPX"
-              />
-              <small>
-                Parsed: {tickers.length ? tickers.join(", ") : "(none)"}
-              </small>
-            </label>
-
-            <label className="field">
-              <span>Risk tolerance: {riskTolerance.toFixed(2)}</span>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={riskTolerance}
-                onChange={(e) => setRiskTolerance(Number(e.target.value))}
-              />
-              <small>
-                Included in the request for future extensibility. Current CAPM
-                calculation may not use it directly.
-              </small>
-            </label>
-
-            <div className="two-col">
-              <label className="field">
-                <span>Horizon (years)</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={horizonYears}
-                  onChange={(e) => setHorizonYears(Number(e.target.value))}
-                />
-              </label>
-
-              <label className="field">
-                <span>Initial investment ($)</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={investmentAmount}
-                  onChange={(e) => setInvestmentAmount(Number(e.target.value))}
-                />
-              </label>
-            </div>
+        <section className="tab-switch-wrap">
+          <div
+            className={`glass-tab-switch ${activeTab === "advanced" ? "switch-right" : "switch-left"}`}
+          >
+            <div className="glass-tab-slider" />
 
             <button
-              className="action-button"
-              onClick={handleRecommend}
-              disabled={loading || tickers.length === 0}
+              type="button"
+              className={`glass-tab-option ${activeTab === "calculator" ? "active" : ""}`}
+              onClick={() => setActiveTab("calculator")}
             >
-              {loading ? "Calculating..." : "Get future value"}
+              Calculator
+            </button>
+
+            <button
+              type="button"
+              className={`glass-tab-option ${activeTab === "advanced" ? "active" : ""}`}
+              onClick={() => setActiveTab("advanced")}
+            >
+              Advanced Analytics
             </button>
           </div>
         </section>
+        {activeTab === "calculator" && (
+          <>
+           <section className="glass-card intro-card">
+            <div className="intro-copy">
+              <p className="eyebrow">Calculator input</p>
+              <h2>Enter mutual funds and investment details</h2>
+              <p className="intro-text">
+                Add one or more mutual fund tickers, then enter your investment
+                amount and time horizon. The total amount is split evenly across
+                the selected funds.
+              </p>
+            </div>
 
-        {error && (
-          <section className="glass-card feedback-card error-card">
-            <strong>Error</strong>
-            <p>{error}</p>
-          </section>
-        )}
+            <div className="form-grid">
+              <label className="field">
+                <span>Mutual fund tickers</span>
+                <input
+                  value={tickerText}
+                  onChange={(e) => setTickerText(e.target.value)}
+                  placeholder="VFIAX FXAIX SWPPX"
+                />
+                <small>
+                  Parsed: {tickers.length ? tickers.join(", ") : "(none)"}
+                </small>
+              </label>
 
-        {result && (
-          <section className="results-grid">
-            <article className="glass-card stat-card">
-              <div className="stat-label">Total predicted future value</div>
-              <div className="stat-value">
-                {result.totalFutureValue.toLocaleString(undefined, {
-                  style: "currency",
-                  currency: "USD",
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+              <label className="field">
+                <span>Risk tolerance: {riskTolerance.toFixed(2)}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={riskTolerance}
+                  onChange={(e) => setRiskTolerance(Number(e.target.value))}
+                />
+                <small>
+                  Included in the request for future extensibility. Current CAPM
+                  calculation may not use it directly.
+                </small>
+              </label>
+
+              <div className="two-col">
+                <label className="field">
+                  <span>Horizon (years)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={horizonYears}
+                    onChange={(e) => setHorizonYears(Number(e.target.value))}
+                  />
+                </label>
+
+                <label className="field">
+                  <span>Initial investment ($)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={investmentAmount}
+                    onChange={(e) => setInvestmentAmount(Number(e.target.value))}
+                  />
+                </label>
               </div>
-            </article>
 
-            {result.funds.map((fund) => (
-              <article key={fund.ticker} className="glass-card result-card">
-                <div className="card-top">
-                  <h3>{fund.ticker}</h3>
-                </div>
+              <button
+                className="action-button"
+                onClick={handleRecommend}
+                disabled={loading || tickers.length === 0}
+              >
+                {loading ? "Calculating..." : "Get future value"}
+              </button>
+            </div>
+          </section>
 
-                <div className="tag-row">
-                  <span className="soft-tag">
-                    Principal:{" "}
-                    {fund.principal.toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD",
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                  <span className="soft-tag">
-                    Beta: {fund.beta.toFixed(2)}
-                  </span>
-                  <span className="soft-tag">
-                    Expected Return: {(fund.expectedReturnRate * 100).toFixed(2)}%
-                  </span>
-                  <span className="soft-tag">
-                    CAPM Rate: {(fund.capmRate * 100).toFixed(2)}%
-                  </span>
-                  <span className="soft-tag highlight-tag">
-                    Future Value:{" "}
-                    {fund.futureValue.toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD",
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
+          {error && (
+            <section className="glass-card feedback-card error-card">
+              <strong>Error</strong>
+              <p>{error}</p>
+            </section>
+          )}
+
+          {result && (
+            <section className="results-grid">
+              <article className="glass-card stat-card">
+                <div className="stat-label">Total predicted future value</div>
+                <div className="stat-value">
+                  {result.totalFutureValue.toLocaleString(undefined, {
+                    style: "currency",
+                    currency: "USD",
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </div>
               </article>
-            ))}
 
-            <article className="glass-card result-card">
-              <div className="card-top">
-                <h3>Explanation</h3>
-              </div>
-              <p className="explanation-text">{result.explanation}</p>
-            </article>
+              {result.funds.map((fund) => (
+                <article key={fund.ticker} className="glass-card result-card">
+                  <div className="card-top">
+                    <h3>{fund.ticker}</h3>
+                  </div>
+
+                  <div className="tag-row">
+                    <span className="soft-tag">
+                      Principal:{" "}
+                      {fund.principal.toLocaleString(undefined, {
+                        style: "currency",
+                        currency: "USD",
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                    <span className="soft-tag">
+                      Beta: {fund.beta.toFixed(2)}
+                    </span>
+                    <span className="soft-tag">
+                      Expected Return: {(fund.expectedReturnRate * 100).toFixed(2)}%
+                    </span>
+                    <span className="soft-tag">
+                      CAPM Rate: {(fund.capmRate * 100).toFixed(2)}%
+                    </span>
+                    <span className="soft-tag highlight-tag">
+                      Future Value:{" "}
+                      {fund.futureValue.toLocaleString(undefined, {
+                        style: "currency",
+                        currency: "USD",
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                </article>
+              ))}
+
+              <article className="glass-card result-card">
+                <div className="card-top">
+                  <h3>Explanation</h3>
+                </div>
+                <p className="explanation-text">{result.explanation}</p>
+              </article>
+            </section>
+          )}
+          </>
+        )}
+        {activeTab === "advanced" && (
+          <section className="glass-card intro-card">
+            <div className="intro-copy">
+              <p className="eyebrow">Advanced analytics</p>
+              <h2>Advanced analytics coming soon</h2>
+              <p className="intro-text">
+                extra features: Monte Carlo simulation, histograms, benchmark comparison, 
+                drawdown charts, AI explanation, scenario analysis etc
+              </p>
+            </div>
           </section>
         )}
+        
       </main>
     </div>
   );
