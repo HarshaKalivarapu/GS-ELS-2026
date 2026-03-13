@@ -3,10 +3,16 @@ package com.gs.mutualfundcalc.dto;
 import java.util.List;
 
 public record PortfolioRecommendation(
-    List<Allocation> allocations,
-    double expectedReturn,
-    double volatility,
+    List<FundResult> funds,
+    double totalFutureValue,
     String explanation
 ) {
-  public record Allocation(String ticker, double weight) {}
+    public record FundResult(
+        String ticker,
+        double principal,
+        double beta,
+        double expectedReturnRate,
+        double capmRate,
+        double futureValue
+    ) {}
 }

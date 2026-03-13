@@ -1,19 +1,25 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-
-type Allocation = { ticker: string; weight: number };
 
 type PortfolioRequest = {
   tickers: string[];
-  riskTolerance: number; // 0..1
+  riskTolerance: number;
   horizonYears: number;
   investmentAmount: number;
 };
 
+type FundResult = {
+  ticker: string;
+  principal: number;
+  beta: number;
+  expectedReturnRate: number;
+  capmRate: number;
+  futureValue: number;
+};
+
 type PortfolioRecommendation = {
-  allocations: Allocation[];
-  expectedReturn: number;
-  volatility: number;
+  funds: FundResult[];
+  totalFutureValue: number;
   explanation: string;
 };
 
@@ -25,16 +31,63 @@ function parseTickers(input: string): string[] {
 }
 
 export default function App() {
-  const [tickerText, setTickerText] = useState("AAPL MSFT VTI");
+  const [tickerText, setTickerText] = useState("VFIAX FXAIX SWPPX");
   const [riskTolerance, setRiskTolerance] = useState(0.5);
   const [horizonYears, setHorizonYears] = useState(5);
   const [investmentAmount, setInvestmentAmount] = useState(10000);
 
-  const tickers = useMemo(() => parseTickers(tickerText), [tickerText]);
-
   const [result, setResult] = useState<PortfolioRecommendation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [navOpacity, setNavOpacity] = useState(0);
+  const [mouse, setMouse] = useState({ x: 50, y: 35 });
+
+  const tickers = useMemo(() => parseTickers(tickerText), [tickerText]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const fadeStart = 120;
+      const fadeEnd = 360;
+      const scroll = window.scrollY;
+
+      let opacity = 0;
+      if (scroll > fadeStart) {
+        opacity = Math.min((scroll - fadeStart) / (fadeEnd - fadeStart), 1);
+      }
+      setNavOpacity(opacity);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth) * 100;
+      const y = (e.clientY / window.innerHeight) * 100;
+      setMouse({ x, y });
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
+
+  const heroStyle = useMemo(
+    () => ({
+      background: `
+        radial-gradient(
+          circle at ${mouse.x}% ${mouse.y}%,
+          rgba(59, 130, 246, 0.24) 0%,
+          rgba(59, 130, 246, 0.12) 18%,
+          rgba(59, 130, 246, 0.04) 34%,
+          rgba(245, 247, 251, 0.96) 62%
+        ),
+        linear-gradient(180deg, #f8fafc 0%, #eef2f7 56%, #e9eef5 100%)
+      `,
+    }),
+    [mouse]
+  );
 
   async function handleRecommend() {
     setLoading(true);
@@ -70,113 +123,200 @@ export default function App() {
     }
   }
 
+  const scrollToOptimizer = () => {
+    const el = document.getElementById("optimizer-section");
+    el?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      <h1>AI Portfolio Optimizer</h1>
-      <p style={{ marginTop: 4, opacity: 0.8 }}>
-        Input tickers + risk profile → get allocation + risk summary.
-      </p>
+    <div className="app-shell">
+      <header className="floating-nav" style={{ opacity: navOpacity }}>
+        <div className="floating-nav-inner">
+          <div className="nav-brand">
+            <div className="nav-brand-mark">MF</div>
+            <span>Mutual Fund Calculator</span>
+          </div>
 
-      <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
-        <label style={{ display: "grid", gap: 6 }}>
-          <span>Tickers (space or comma separated)</span>
-          <input
-            value={tickerText}
-            onChange={(e) => setTickerText(e.target.value)}
-            placeholder="AAPL MSFT VTI"
-          />
-          <small style={{ opacity: 0.7 }}>
-            Parsed: {tickers.length ? tickers.join(", ") : "(none)"}
-          </small>
-        </label>
+          <button className="nav-button" onClick={scrollToOptimizer}>
+            Calculate
+          </button>
+        </div>
+      </header>
 
-        <label style={{ display: "grid", gap: 6 }}>
-          <span>Risk tolerance: {riskTolerance.toFixed(2)}</span>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={riskTolerance}
-            onChange={(e) => setRiskTolerance(Number(e.target.value))}
-          />
-          <small style={{ opacity: 0.7 }}>0 = conservative, 1 = aggressive</small>
-        </label>
+      <section className="hero" style={heroStyle}>
+        <div className="hero-inner">
+          <div className="hero-copy">
+            <p className="hero-eyebrow">CAPM-based mutual fund forecasting</p>
+            <h1>Estimate future value across one or more mutual funds</h1>
+            <p className="hero-subtext">
+              Input mutual fund tickers, your initial investment, and your time
+              horizon to estimate future value using beta, historical return,
+              and the CAPM formula.
+            </p>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <label style={{ display: "grid", gap: 6 }}>
-            <span>Horizon (years)</span>
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={horizonYears}
-              onChange={(e) => setHorizonYears(Number(e.target.value))}
-            />
-          </label>
-
-          <label style={{ display: "grid", gap: 6 }}>
-            <span>Investment amount ($)</span>
-            <input
-              type="number"
-              min={0}
-              value={investmentAmount}
-              onChange={(e) => setInvestmentAmount(Number(e.target.value))}
-            />
-          </label>
+            <div className="hero-cta-row">
+              <button className="primary-cta" onClick={scrollToOptimizer}>
+                Start calculating
+              </button>
+              <div className="hero-mini-note">
+                Try VFIAX, FXAIX, SWPPX, AGTHX
+              </div>
+            </div>
+          </div>
         </div>
 
         <button
-          onClick={handleRecommend}
-          disabled={loading || tickers.length === 0}
-          style={{ padding: "10px 14px", cursor: "pointer" }}
+          className="scroll-indicator"
+          onClick={scrollToOptimizer}
+          aria-label="Scroll down"
         >
-          {loading ? "Generating..." : "Get recommendation"}
+          <span className="scroll-indicator-text">Scroll</span>
+          <span className="scroll-indicator-arrow">↓</span>
         </button>
+      </section>
+
+      <main id="optimizer-section" className="content-section">
+        <section className="glass-card intro-card">
+          <div className="intro-copy">
+            <p className="eyebrow">Calculator input</p>
+            <h2>Enter mutual funds and investment details</h2>
+            <p className="intro-text">
+              Add one or more mutual fund tickers, then enter your investment
+              amount and time horizon. The total amount is split evenly across
+              the selected funds.
+            </p>
+          </div>
+
+          <div className="form-grid">
+            <label className="field">
+              <span>Mutual fund tickers</span>
+              <input
+                value={tickerText}
+                onChange={(e) => setTickerText(e.target.value)}
+                placeholder="VFIAX FXAIX SWPPX"
+              />
+              <small>
+                Parsed: {tickers.length ? tickers.join(", ") : "(none)"}
+              </small>
+            </label>
+
+            <label className="field">
+              <span>Risk tolerance: {riskTolerance.toFixed(2)}</span>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={riskTolerance}
+                onChange={(e) => setRiskTolerance(Number(e.target.value))}
+              />
+              <small>
+                Included in the request for future extensibility. Current CAPM
+                calculation may not use it directly.
+              </small>
+            </label>
+
+            <div className="two-col">
+              <label className="field">
+                <span>Horizon (years)</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={horizonYears}
+                  onChange={(e) => setHorizonYears(Number(e.target.value))}
+                />
+              </label>
+
+              <label className="field">
+                <span>Initial investment ($)</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={investmentAmount}
+                  onChange={(e) => setInvestmentAmount(Number(e.target.value))}
+                />
+              </label>
+            </div>
+
+            <button
+              className="action-button"
+              onClick={handleRecommend}
+              disabled={loading || tickers.length === 0}
+            >
+              {loading ? "Calculating..." : "Get future value"}
+            </button>
+          </div>
+        </section>
 
         {error && (
-          <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 8 }}>
-            <strong>Error:</strong> <span>{error}</span>
-          </div>
+          <section className="glass-card feedback-card error-card">
+            <strong>Error</strong>
+            <p>{error}</p>
+          </section>
         )}
 
         {result && (
-          <div style={{ display: "grid", gap: 12, marginTop: 8 }}>
-            <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 8 }}>
-              <h2 style={{ marginTop: 0 }}>Allocation</h2>
-              <ul style={{ margin: 0, paddingLeft: 18 }}>
-                {result.allocations.map((a) => (
-                  <li key={a.ticker}>
-                    {a.ticker}: {(a.weight * 100).toFixed(1)}%
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 8 }}>
-                <div style={{ opacity: 0.7 }}>Expected return</div>
-                <div style={{ fontSize: 22 }}>
-                  {(result.expectedReturn * 100).toFixed(1)}%
-                </div>
+          <section className="results-grid">
+            <article className="glass-card stat-card">
+              <div className="stat-label">Total predicted future value</div>
+              <div className="stat-value">
+                {result.totalFutureValue.toLocaleString(undefined, {
+                  style: "currency",
+                  currency: "USD",
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </div>
-              <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 8 }}>
-                <div style={{ opacity: 0.7 }}>Volatility</div>
-                <div style={{ fontSize: 22 }}>
-                  {(result.volatility * 100).toFixed(1)}%
-                </div>
-              </div>
-            </div>
+            </article>
 
-            <div style={{ padding: 12, border: "1px solid #ddd", borderRadius: 8 }}>
-              <h2 style={{ marginTop: 0 }}>Why this portfolio</h2>
-              <p style={{ marginBottom: 0, whiteSpace: "pre-wrap" }}>
-                {result.explanation}
-              </p>
-            </div>
-          </div>
+            {result.funds.map((fund) => (
+              <article key={fund.ticker} className="glass-card result-card">
+                <div className="card-top">
+                  <h3>{fund.ticker}</h3>
+                </div>
+
+                <div className="tag-row">
+                  <span className="soft-tag">
+                    Principal:{" "}
+                    {fund.principal.toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                  <span className="soft-tag">
+                    Beta: {fund.beta.toFixed(2)}
+                  </span>
+                  <span className="soft-tag">
+                    Expected Return: {(fund.expectedReturnRate * 100).toFixed(2)}%
+                  </span>
+                  <span className="soft-tag">
+                    CAPM Rate: {(fund.capmRate * 100).toFixed(2)}%
+                  </span>
+                  <span className="soft-tag highlight-tag">
+                    Future Value:{" "}
+                    {fund.futureValue.toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+              </article>
+            ))}
+
+            <article className="glass-card result-card">
+              <div className="card-top">
+                <h3>Explanation</h3>
+              </div>
+              <p className="explanation-text">{result.explanation}</p>
+            </article>
+          </section>
         )}
-      </div>
+      </main>
     </div>
   );
 }
