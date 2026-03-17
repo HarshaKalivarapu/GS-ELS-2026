@@ -1,0 +1,195 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import type { PortfolioRecommendation, PortfolioRequest } from "../../types";
+import HeroSection from "./HeroSection";
+import CalculatorForm from "./CalculatorForm";
+import ResultsSection from "./ResultsSection";
+import RiskMetricsSection from "./RiskMetricsSection";
+
+const SECTION_BGS = ["#2563eb", "#ffffff", "#0f172a", "#f8fafc"];
+
+const pageVariants = {
+  enter: (dir: number) => ({ opacity: 0, y: dir > 0 ? 40 : -40 }),
+  center: { opacity: 1, y: 0 },
+  exit: (dir: number) => ({ opacity: 0, y: dir > 0 ? -40 : 40 }),
+};
+
+const pageTrans = { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const };
+
+function parseTickers(input: string): string[] {
+  return input
+    .split(/[,\s]+/)
+    .map((t) => t.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+type Props = {
+  activeTab: string;
+  onTabChange: (t: string) => void;
+  initialSection?: number;
+};
+
+export default function Calculator({ activeTab, onTabChange, initialSection = 0 }: Props) {
+  const [tickerText, setTickerText] = useState("VFIAX FXAIX SWPPX");
+  const [riskTolerance, setRiskTolerance] = useState(0.5);
+  const [horizonYears, setHorizonYears] = useState(5);
+  const [investmentAmount, setInvestmentAmount] = useState(10000);
+  const [result, setResult] = useState<PortfolioRecommendation | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [sectionIdx, setSectionIdx] = useState(initialSection);
+  const [direction, setDirection] = useState(1);
+  const busy = useRef(false);
+  const idxRef = useRef(initialSection);
+
+  const tickers = useMemo(() => parseTickers(tickerText), [tickerText]);
+
+  const maxSectionRef = useRef(1);
+  maxSectionRef.current = result ? SECTION_BGS.length - 1 : 1;
+
+  const goTo = useCallback((next: number) => {
+    const cur = idxRef.current;
+    if (next === cur || next < 0 || next > maxSectionRef.current || busy.current) return;
+    busy.current = true;
+    setDirection(next > cur ? 1 : -1);
+    setSectionIdx(next);
+    idxRef.current = next;
+    setTimeout(() => { busy.current = false; }, 600);
+  }, []);
+
+  // Wheel navigation — throttled to one section per swipe
+  useEffect(() => {
+    let lastWheel = 0;
+    function onWheel(e: WheelEvent) {
+      e.preventDefault();
+      if (Math.abs(e.deltaY) < 15) return;
+      const now = Date.now();
+      if (now - lastWheel < 800) return;
+      lastWheel = now;
+      if (e.deltaY > 0) goTo(idxRef.current + 1);
+      else goTo(idxRef.current - 1);
+    }
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [goTo]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowDown" || e.key === "PageDown") goTo(idxRef.current + 1);
+      if (e.key === "ArrowUp" || e.key === "PageUp") goTo(idxRef.current - 1);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goTo]);
+
+  async function handleRecommend() {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    const payload: PortfolioRequest = {
+      tickers,
+      riskTolerance,
+      horizonYears,
+      investmentAmount,
+    };
+
+    try {
+      const res = await fetch("/api/portfolio/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Request failed (${res.status})`);
+      }
+
+      const data = (await res.json()) as PortfolioRecommendation;
+      setResult(data);
+      setTimeout(() => goTo(2), 100);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const pages = [
+    <HeroSection key="hero" onStartCalculating={() => goTo(1)} />,
+    <CalculatorForm
+      key="form"
+      tickerText={tickerText}
+      tickers={tickers}
+      riskTolerance={riskTolerance}
+      horizonYears={horizonYears}
+      investmentAmount={investmentAmount}
+      loading={loading}
+      error={error}
+      activeTab={activeTab}
+      onTabChange={onTabChange}
+      onTickerChange={setTickerText}
+      onRiskChange={setRiskTolerance}
+      onHorizonChange={setHorizonYears}
+      onAmountChange={setInvestmentAmount}
+      onSubmit={handleRecommend}
+    />,
+    <ResultsSection
+      key="results"
+      result={result}
+      investmentAmount={investmentAmount}
+      horizonYears={horizonYears}
+      onScrollToForm={() => goTo(1)}
+    />,
+    <RiskMetricsSection key="risk" result={result} investmentAmount={investmentAmount} />,
+  ];
+
+  return (
+    <motion.div
+      style={{ position: "fixed", inset: 0, overflow: "hidden" }}
+      animate={{ backgroundColor: SECTION_BGS[sectionIdx] }}
+      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+    >
+      {/* Section dots nav */}
+      <div style={{
+        position: "fixed", right: 24, top: "50%", transform: "translateY(-50%)",
+        display: "flex", flexDirection: "column", gap: 10, zIndex: 50,
+      }}>
+        {SECTION_BGS.slice(0, result ? SECTION_BGS.length : 2).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => goTo(i)}
+            style={{
+              width: 8, height: 8, borderRadius: "50%", border: "none",
+              cursor: "pointer", padding: 0,
+              background: i === sectionIdx
+                ? (sectionIdx === 1 || sectionIdx === 3 ? "#2563eb" : "#ffffff")
+                : (sectionIdx === 1 || sectionIdx === 3 ? "rgba(37,99,235,0.25)" : "rgba(255,255,255,0.35)"),
+              transition: "background 0.3s, transform 0.3s",
+              transform: i === sectionIdx ? "scale(1.5)" : "scale(1)",
+            }}
+            aria-label={`Go to section ${i + 1}`}
+          />
+        ))}
+      </div>
+
+      <AnimatePresence custom={direction} mode="sync">
+        <motion.div
+          key={sectionIdx}
+          custom={direction}
+          variants={pageVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={pageTrans}
+          style={{ position: "absolute", inset: 0, overflowY: "auto" }}
+        >
+          {pages[sectionIdx]}
+        </motion.div>
+      </AnimatePresence>
+    </motion.div>
+  );
+}
