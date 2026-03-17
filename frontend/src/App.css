@@ -528,11 +528,8 @@ input {
   grid-template-columns: 1fr 1fr;
   padding: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: var(--shadow-soft);
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   overflow: hidden;
 }
 
@@ -543,10 +540,10 @@ input {
   left: 6px;
   width: calc(50% - 6px);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
-  transition: transform 0.28s ease;
+  background: #2563eb;
+  border: none;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   z-index: 1;
 }
 
@@ -559,17 +556,16 @@ input {
   z-index: 2;
   border: none;
   background: transparent;
-  color: var(--muted);
+  color: #64748b;
   font-weight: 700;
   padding: 14px 18px;
   border-radius: 999px;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color 0.25s ease;
 }
 
 .glass-tab-option.active {
-  color: var(--text);
-  border: 1px solid aliceblue;
+  color: #ffffff;
 }
 
 .glass-tab-option:focus {
@@ -586,4 +582,1005 @@ input {
     padding: 13px 10px;
     font-size: 0.94rem;
   }
+}
+
+/* ─── Sections — each fills the AnimatePresence viewport pane ─── */
+
+.section-hero {
+  position: relative;
+  background: transparent;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.section-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 70% 50%, rgba(96, 165, 250, 0.35) 0%, transparent 60%),
+    radial-gradient(ellipse at 20% 80%, rgba(29, 78, 216, 0.6) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.section-form {
+  background: transparent;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.section-results {
+  background: transparent;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.section-risk {
+  background: transparent;
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  padding: 80px 0;
+}
+
+/* ─── Layout grids ─── */
+
+.three-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+/* S1 Hero: 2-col (left content, right chart card) */
+.hero-two-col {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+
+.two-thirds-col {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 64px;
+  align-items: center;
+}
+
+/* S3 Results: 2-col (left narrow stats, right wide chart) */
+.s3-two-col {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.section-inner {
+  position: relative;
+  z-index: 2;
+  width: min(calc(100% - 48px), 1180px);
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+/* ─── Hero redesign ─── */
+
+.hero-headline-white {
+  margin: 0;
+  font-size: clamp(2.8rem, 5vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  color: #ffffff;
+  font-family: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.hero-eyebrow-white {
+  margin: 0 0 20px 0;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.hero-subtext-white {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin: 0 0 28px 0;
+}
+
+/* ─── Pill CTA buttons ─── */
+
+/* pill-cta-white: outline (white border, white text). On hover: white fills from left, text turns blue. */
+.pill-cta-white {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid #ffffff;
+  background: linear-gradient(to right, #ffffff 50%, transparent 50%);
+  background-size: 200% 100%;
+  background-position: right center;
+  color: #ffffff;
+  border-radius: 9999px;
+  padding: 15px 28px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  transition: background-position 0.55s ease, color 0.2s ease,
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+
+.pill-cta-white:hover {
+  background-position: left center;
+  color: #2563eb;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 20px 50px rgba(37, 99, 235, 0.35);
+}
+
+.pill-cta-white:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.pill-cta-white:hover .cta-arrow {
+  transform: translateX(4px);
+}
+
+.cta-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+/* pill-cta-blue: outline (blue border, blue text). On hover: blue fills from left, text turns white. */
+.pill-cta-blue {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid #2563eb;
+  background: linear-gradient(to right, #2563eb 50%, transparent 50%);
+  background-size: 200% 100%;
+  background-position: right center;
+  color: #2563eb;
+  border-radius: 9999px;
+  padding: 15px 28px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.28);
+  transition: background-position 0.55s ease, color 0.2s ease,
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+
+.pill-cta-blue:hover {
+  background-position: left center;
+  color: #ffffff;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 18px 48px rgba(37, 99, 235, 0.4);
+}
+
+.pill-cta-blue:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.pill-cta-blue:hover .cta-arrow {
+  transform: translateX(4px);
+}
+
+.pill-cta-blue:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ─── Hero chart preview ─── */
+
+.hero-chart-wrap {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 32px;
+  padding: 32px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.hero-chart-label {
+  color: #93c5fd;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin: 0 0 8px;
+}
+
+.hero-chart-value {
+  color: #ffffff;
+  font-size: 3.25rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  margin: 0 0 12px;
+}
+
+.hero-chart-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(34, 197, 94, 0.18);
+  color: #86efac;
+  border-radius: 9999px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+/* ─── Section headlines ─── */
+
+.section-headline-dark {
+  margin: 0 0 16px 0;
+  font-size: clamp(2rem, 3.5vw, 3.2rem);
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+  color: #0f172a;
+  font-family: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.section-headline-white {
+  margin: 0 0 16px 0;
+  font-size: clamp(2rem, 3.5vw, 3.2rem);
+  line-height: 0.96;
+  letter-spacing: -0.05em;
+  color: #ffffff;
+  font-family: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.section-eyebrow-blue {
+  margin: 0 0 16px 0;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.section-eyebrow-muted {
+  margin: 0 0 16px 0;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.section-subtext-muted {
+  color: #64748b;
+  font-size: 1.03rem;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.section-subtext-white {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 1.03rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ─── Form section redesign ─── */
+
+.form-glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  border-radius: 28px;
+  padding: 48px;
+  box-shadow: 0 24px 64px rgba(40, 60, 90, 0.1);
+}
+
+/* New: solid gray form card (matches Pencil mockup) */
+.form-card-gray {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 28px;
+  padding: 48px;
+}
+
+.form-field-label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #374151;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.form-input-clean {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Remove number input arrows */
+.form-input-clean::-webkit-outer-spin-button,
+.form-input-clean::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.form-input-clean[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.form-input-clean:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-input-clean::placeholder {
+  color: #94a3b8;
+}
+
+.form-parsed-note {
+  margin: 8px 0 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.slider-value-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.risk-label-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.range-input {
+  width: 100%;
+  accent-color: #2563eb;
+  height: 4px;
+}
+
+.range-track {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.range-track span {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+/* ─── Results section (dark navy) ─── */
+
+.results-total-value {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: #60a5fa;
+  line-height: 1;
+  margin: 8px 0 24px 0;
+}
+
+.results-stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.results-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.results-stat-label {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.results-stat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+}
+
+/* ─── Metric cards grid (3-up, dark bg) ─── */
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 0;
+}
+
+.metric-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.metric-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.metric-card-label {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.metric-card-ticker {
+  font-size: 0.9rem;
+  color: #60a5fa;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.metric-card-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.metric-card-sub {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 4px;
+}
+
+/* ─── Chart wrapper (dark) ─── */
+
+.chart-wrap-dark {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+}
+
+/* ─── Risk metrics section ─── */
+
+.risk-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 24px;
+  flex: 1;
+}
+
+.risk-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.risk-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
+}
+
+.risk-card--tall {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+
+.risk-card-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin: 0;
+}
+
+.risk-card-value {
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: #0f172a;
+  line-height: 1;
+  margin: 0;
+}
+
+.risk-card-desc {
+  font-size: 0.88rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.risk-card-chart {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.risk-badge-positive {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.risk-badge-warning {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* ─── Results placeholder (before calc) ─── */
+
+.results-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+  padding: 80px 24px;
+}
+
+.results-placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.results-placeholder-text {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 1.1rem;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 1024px) {
+  .three-col,
+  .hero-two-col {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  .s3-two-col {
+    grid-template-columns: 300px 1fr;
+    gap: 32px;
+  }
+
+  .metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .risk-cards-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .risk-card--tall {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .three-col,
+  .two-thirds-col,
+  .hero-two-col,
+  .s3-two-col {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .risk-cards-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .risk-card--tall {
+    grid-row: auto;
+  }
+
+  .section-inner {
+    padding: 60px 0;
+  }
+
+  .form-glass-card,
+  .form-card-gray,
+  .calculator-card {
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-headline-white {
+    font-size: 2.4rem;
+  }
+}
+
+/* ─── highlight tag ─── */
+
+.highlight-tag {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--accent);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+/* ─── Global: remove number input spinners ─── */
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ─── Calculator card (dark calculator aesthetic) ─── */
+
+.calculator-card {
+  background: #2563eb;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 28px;
+  padding: 32px;
+  box-shadow: 0 32px 80px rgba(37, 99, 235, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.calc-display {
+  background: #1d4ed8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 22px 26px;
+  position: relative;
+  overflow: hidden;
+}
+
+.calc-display::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 165, 250, 0.4), transparent);
+}
+
+.calc-display-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.calc-display-value {
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  line-height: 1.05;
+  font-family: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+  margin-bottom: 8px;
+}
+
+.calc-display-sub {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 500;
+}
+
+.calc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.calc-field-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+}
+
+.calc-input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.calc-input:focus {
+  outline: none;
+  border-color: rgba(99, 165, 250, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.calc-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.calc-risk-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.calc-risk-btn {
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.calc-risk-btn:hover {
+  border-color: rgba(99, 165, 250, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.calc-risk-btn.active {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #1d4ed8;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.calc-inputs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.calc-number-input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-family: inherit;
+  transition: border-color 0.18s ease;
+  text-align: center;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
+.calc-number-input:focus {
+  outline: none;
+  border-color: rgba(99, 165, 250, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.calc-number-input::-webkit-outer-spin-button,
+.calc-number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ─── Analytics Section (Section 5) ─── */
+
+.section-analytics {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.analytics-grid {
+  display: flex;
+  gap: 24px;
+  height: 480px;
+}
+
+.analytics-chart-card {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.scenario-cards-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 340px;
+  flex-shrink: 0;
+}
+
+.scenario-card {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 22px 24px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scenario-card--featured {
+  background: #1d4ed8;
+  box-shadow: 0 8px 32px rgba(29, 78, 216, 0.32);
+  border-color: transparent;
+}
+
+.analytics-scenario-value {
+  margin: 0;
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.scenario-value-dark { color: #0f172a; }
+.scenario-value-white { color: #ffffff; }
+
+.risk-card-label--white {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.risk-card-desc--white {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.risk-badge-blue {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  width: fit-content;
+}
+
+.scenario-badge-green {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  width: fit-content;
+}
+
+.scenario-badge-white {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  width: fit-content;
+}
+
+.scenario-badge-amber {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  width: fit-content;
+}
+
+@media (max-width: 1024px) {
+  .scenario-cards-col {
+    width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .analytics-grid {
+    flex-direction: column;
+    height: auto;
+  }
+  .analytics-chart-card {
+    height: 320px;
+  }
+  .scenario-cards-col {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .scenario-card {
+    min-width: calc(50% - 7px);
+  }
+}
 }

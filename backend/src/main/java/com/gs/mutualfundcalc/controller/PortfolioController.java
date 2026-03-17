@@ -5,6 +5,7 @@ import com.gs.mutualfundcalc.dto.PortfolioRequest;
 import com.gs.mutualfundcalc.service.PortfolioService;
 import org.springframework.web.bind.annotation.*;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/portfolio")
 public class PortfolioController {
