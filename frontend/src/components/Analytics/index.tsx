@@ -135,12 +135,14 @@ export default function Analytics({ onTabChange }: Props) {
                     fontSize: 12,
                     boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
                   }}
-                  formatter={(v: number, name: string) => [
-                    v.toLocaleString("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                      maximumFractionDigits: 0,
-                    }),
+                  formatter={(value, name) => [
+                    typeof value === "number"
+                      ? value.toLocaleString("en-US", {
+                          style: "currency",
+                          currency: "USD",
+                          maximumFractionDigits: 0,
+                        })
+                      : String(value ?? ""),
                     name === "p95"
                       ? "95th Percentile"
                       : name === "median"
