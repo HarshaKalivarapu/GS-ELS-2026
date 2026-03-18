@@ -6,7 +6,7 @@ import CalculatorForm from "./CalculatorForm";
 import ResultsSection from "./ResultsSection";
 import RiskMetricsSection from "./RiskMetricsSection";
 
-const SECTION_BGS = ["#2563eb", "#ffffff", "#0f172a", "#f8fafc"];
+const SECTION_BGS = ["#ffffff", "#ffffff", "#0f172a", "#f8fafc"];
 
 const pageVariants = {
   enter: (dir: number) => ({ opacity: 0, y: dir > 0 ? 40 : -40 }),
@@ -29,7 +29,11 @@ type Props = {
   initialSection?: number;
 };
 
-export default function Calculator({ activeTab, onTabChange, initialSection = 0 }: Props) {
+export default function Calculator({
+  activeTab,
+  onTabChange,
+  initialSection = 0,
+}: Props) {
   const [tickerText, setTickerText] = useState("VFIAX FXAIX SWPPX");
   const [riskTolerance, setRiskTolerance] = useState(0.5);
   const [horizonYears, setHorizonYears] = useState(5);
@@ -40,8 +44,10 @@ export default function Calculator({ activeTab, onTabChange, initialSection = 0 
 
   const [sectionIdx, setSectionIdx] = useState(initialSection);
   const [direction, setDirection] = useState(1);
+
   const busy = useRef(false);
   const idxRef = useRef(initialSection);
+  const lastNavTimeRef = useRef(0);
 
   const tickers = useMemo(() => parseTickers(tickerText), [tickerText]);
 
@@ -50,36 +56,55 @@ export default function Calculator({ activeTab, onTabChange, initialSection = 0 
 
   const goTo = useCallback((next: number) => {
     const cur = idxRef.current;
-    if (next === cur || next < 0 || next > maxSectionRef.current || busy.current) return;
+    if (next === cur || next < 0 || next > maxSectionRef.current || busy.current) {
+      return;
+    }
+
     busy.current = true;
     setDirection(next > cur ? 1 : -1);
     setSectionIdx(next);
     idxRef.current = next;
-    setTimeout(() => { busy.current = false; }, 600);
+
+    setTimeout(() => {
+      busy.current = false;
+    }, 600);
   }, []);
 
-  // Wheel navigation — throttled to one section per swipe
-  useEffect(() => {
-    let lastWheel = 0;
-    function onWheel(e: WheelEvent) {
-      e.preventDefault();
-      if (Math.abs(e.deltaY) < 15) return;
-      const now = Date.now();
-      if (now - lastWheel < 800) return;
-      lastWheel = now;
-      if (e.deltaY > 0) goTo(idxRef.current + 1);
-      else goTo(idxRef.current - 1);
-    }
-    window.addEventListener("wheel", onWheel, { passive: false });
-    return () => window.removeEventListener("wheel", onWheel);
-  }, [goTo]);
+  function handleSectionWheel(e: React.WheelEvent<HTMLDivElement>) {
+    const container = e.currentTarget;
+    if (busy.current) return;
 
-  // Keyboard navigation
+    const now = Date.now();
+    if (now - lastNavTimeRef.current < 650) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const remaining = scrollHeight - clientHeight - scrollTop;
+
+    const atTop = scrollTop <= 24;
+    const atBottom = remaining <= 24;
+    const canScroll = scrollHeight > clientHeight + 4;
+
+    if (e.deltaY > 0) {
+      if (Math.abs(e.deltaY) < 25) return;
+      if (canScroll && !atBottom) return;
+      e.preventDefault();
+      lastNavTimeRef.current = now;
+      goTo(idxRef.current + 1);
+    } else if (e.deltaY < 0) {
+      if (Math.abs(e.deltaY) < 25) return;
+      if (canScroll && !atTop) return;
+      e.preventDefault();
+      lastNavTimeRef.current = now;
+      goTo(idxRef.current - 1);
+    }
+  }
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "ArrowDown" || e.key === "PageDown") goTo(idxRef.current + 1);
       if (e.key === "ArrowUp" || e.key === "PageUp") goTo(idxRef.current - 1);
     }
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [goTo]);
@@ -144,7 +169,11 @@ export default function Calculator({ activeTab, onTabChange, initialSection = 0 
       horizonYears={horizonYears}
       onScrollToForm={() => goTo(1)}
     />,
-    <RiskMetricsSection key="risk" result={result} investmentAmount={investmentAmount} />,
+    <RiskMetricsSection
+      key="risk"
+      result={result}
+      investmentAmount={investmentAmount}
+    />,
   ];
 
   return (
@@ -153,21 +182,37 @@ export default function Calculator({ activeTab, onTabChange, initialSection = 0 
       animate={{ backgroundColor: SECTION_BGS[sectionIdx] }}
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
-      {/* Section dots nav */}
-      <div style={{
-        position: "fixed", right: 24, top: "50%", transform: "translateY(-50%)",
-        display: "flex", flexDirection: "column", gap: 10, zIndex: 50,
-      }}>
+      <div
+        style={{
+          position: "fixed",
+          right: 24,
+          top: "50%",
+          transform: "translateY(-50%)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          zIndex: 50,
+        }}
+      >
         {SECTION_BGS.slice(0, result ? SECTION_BGS.length : 2).map((_, i) => (
           <button
             key={i}
             onClick={() => goTo(i)}
             style={{
-              width: 8, height: 8, borderRadius: "50%", border: "none",
-              cursor: "pointer", padding: 0,
-              background: i === sectionIdx
-                ? (sectionIdx === 1 || sectionIdx === 3 ? "#2563eb" : "#ffffff")
-                : (sectionIdx === 1 || sectionIdx === 3 ? "rgba(37,99,235,0.25)" : "rgba(255,255,255,0.35)"),
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              background:
+                i === sectionIdx
+                  ? sectionIdx === 1 || sectionIdx === 3
+                    ? "#2563eb"
+                    : "#ffffff"
+                  : sectionIdx === 1 || sectionIdx === 3
+                  ? "rgba(37,99,235,0.25)"
+                  : "rgba(255,255,255,0.35)",
               transition: "background 0.3s, transform 0.3s",
               transform: i === sectionIdx ? "scale(1.5)" : "scale(1)",
             }}
@@ -185,7 +230,14 @@ export default function Calculator({ activeTab, onTabChange, initialSection = 0 
           animate="center"
           exit="exit"
           transition={pageTrans}
-          style={{ position: "absolute", inset: 0, overflowY: "auto" }}
+          onWheel={handleSectionWheel}
+          style={{
+            position: "absolute",
+            inset: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            WebkitOverflowScrolling: "touch",
+          }}
         >
           {pages[sectionIdx]}
         </motion.div>
