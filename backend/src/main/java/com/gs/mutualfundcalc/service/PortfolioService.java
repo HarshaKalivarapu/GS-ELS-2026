@@ -9,74 +9,53 @@ import java.util.List;
 @Service
 public class PortfolioService {
 
-  public PortfolioRecommendation recommend(PortfolioRequest req) {
+    private final MarketDataService marketDataService;
 
-    List<String> tickers = req.tickers();
-    double totalInvestment = req.investmentAmount();
-    int years = req.horizonYears();
-
-    if (tickers == null || tickers.isEmpty()) {
-      throw new IllegalArgumentException("At least one ticker required");
+    // MarketDataService is injected by Spring so we get real Yahoo Finance data
+    public PortfolioService(MarketDataService marketDataService) {
+        this.marketDataService = marketDataService;
     }
 
-    double principalPerFund = totalInvestment / tickers.size();
+    public PortfolioRecommendation recommend(PortfolioRequest req) {
 
-    double riskFreeRate = 0.04;
+        List<String> tickers = req.tickers();
+        double totalInvestment = req.investmentAmount();
+        int years = req.horizonYears();
 
-    var results = tickers.stream().map(ticker -> {
+        if (tickers == null || tickers.isEmpty()) {
+            throw new IllegalArgumentException("At least one ticker required");
+        }
 
-      double beta = getBeta(ticker);
-      double expectedReturn = getExpectedReturn(ticker);
+        double principalPerFund = totalInvestment / tickers.size();
+        double riskFreeRate = 0.04; // 10-year Treasury approximation
 
-      double capmRate = riskFreeRate + beta * (expectedReturn - riskFreeRate);
+        var results = tickers.stream().map(ticker -> {
 
-      double fv = principalPerFund * Math.exp(capmRate * years);
+            // Fetch real beta and annual return from Yahoo Finance
+            double beta           = marketDataService.fetchBeta(ticker);
+            double expectedReturn = marketDataService.fetchAnnualReturn(ticker);
 
-      return new PortfolioRecommendation.FundResult(
-          ticker,
-          principalPerFund,
-          beta,
-          expectedReturn,
-          capmRate,
-          fv
-      );
+            // CAPM: expected return adjusted for the fund's market sensitivity
+            double capmRate = riskFreeRate + beta * (expectedReturn - riskFreeRate);
 
-    }).toList();
+            // Future value using continuous compounding: FV = P * e^(rt)
+            double fv = principalPerFund * Math.exp(capmRate * years);
 
-    double totalFV = results.stream()
-        .mapToDouble(r -> r.futureValue())
-        .sum();
+            return new PortfolioRecommendation.FundResult(
+                    ticker,
+                    principalPerFund,
+                    beta,
+                    expectedReturn,
+                    capmRate,
+                    fv
+            );
 
-    String explanation = "Future value calculated using CAPM and FV = P * e^(rt)";
+        }).toList();
 
-    return new PortfolioRecommendation(results, totalFV, explanation);
-  }
+        double totalFV = results.stream().mapToDouble(r -> r.futureValue()).sum();
+        String explanation = "Future value calculated using CAPM and FV = P * e^(rt). " +
+                "Beta and annual return sourced live from Yahoo Finance.";
 
-  private double getBeta(String ticker) {
-    return switch (ticker) {
-      case "VFIAX" -> 1.0;
-      case "FXAIX" -> 1.0;
-      case "AGTHX" -> 1.08;
-      default -> 1.0;
-    };
-  }
-
-  private double getExpectedReturn(String ticker) {
-
-    double first = switch (ticker) {
-      case "VFIAX" -> 430.0;
-      case "FXAIX" -> 158.0;
-      case "AGTHX" -> 62.3;
-      default -> 100.0;
-    };
-
-    double last = switch (ticker) {
-      case "VFIAX" -> 468.7;
-      case "FXAIX" -> 172.8;
-      case "AGTHX" -> 68.1;
-      default -> 110.0;
-    };
-
-    return (last - first) / first;
-  }
+        return new PortfolioRecommendation(results, totalFV, explanation);
+    }
 }
