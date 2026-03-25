@@ -19,3 +19,26 @@ export type PortfolioRecommendation = {
   totalFutureValue: number;
   explanation: string;
 };
+
+export type AnalyticsRequest = {
+  tickers: string[];
+  investmentAmount: number;
+  horizonYears: number;
+};
+
+export type MonteCarloPoint = {
+  year: number;
+  p95: number;
+  median: number;
+  p5: number;
+};
+
+export type ScenarioResult = {
+  id: string;
+  label: string;
+  badge: string;
+  badgeClass: string;
+  value: string;
+  desc: string;
+  featured: boolean;
+};

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   LineChart,
@@ -8,56 +9,41 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import type { AnalyticsRequest, MonteCarloPoint, ScenarioResult } from "../../types";
 
 type Props = {
   onTabChange: (t: string) => void;
+  analyticsParams: AnalyticsRequest;
 };
 
-const BASE = 10_000;
+export default function Analytics({ onTabChange, analyticsParams }: Props) {
+  const [mcData, setMcData] = useState<MonteCarloPoint[]>([]);
+  const [scenarios, setScenarios] = useState<ScenarioResult[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const MC_DATA = Array.from({ length: 11 }, (_, year) => ({
-  year,
-  p95: Math.round(BASE * Math.pow(1.143, year)),
-  median: Math.round(BASE * Math.pow(1.087, year)),
-  p5: Math.round(BASE * Math.pow(1.042, year)),
-}));
+  useEffect(() => {
+    setLoading(true);
 
-const SCENARIOS = [
-  {
-    id: "conservative",
-    label: "CONSERVATIVE",
-    badge: "Low risk",
-    badgeClass: "scenario-badge-green",
-    value: "+4.2%",
-    desc: "Stable, diversified returns with minimal drawdown risk.",
-    featured: false,
-  },
-  {
-    id: "moderate",
-    label: "MODERATE",
-    badge: "Recommended",
-    badgeClass: "scenario-badge-white",
-    value: "+8.7%",
-    desc: "Balanced growth with diversified fund exposure.",
-    featured: true,
-  },
-  {
-    id: "aggressive",
-    label: "AGGRESSIVE",
-    badge: "High risk",
-    badgeClass: "scenario-badge-amber",
-    value: "+14.3%",
-    desc: "High potential upside with elevated volatility and drawdown.",
-    featured: false,
-  },
-];
+    const body = JSON.stringify(analyticsParams);
+    const headers = { "Content-Type": "application/json" };
 
-export default function Analytics({ onTabChange }: Props) {
+    Promise.all([
+      fetch("/api/analytics/montecarlo", { method: "POST", headers, body }).then(r => r.json()),
+      fetch("/api/analytics/scenarios",  { method: "POST", headers, body }).then(r => r.json()),
+    ])
+      .then(([mc, sc]) => {
+        setMcData(mc.data ?? []);
+        setScenarios(sc.scenarios ?? []);
+      })
+      .catch(() => {/* keep empty state on error */})
+      .finally(() => setLoading(false));
+  }, [analyticsParams]);
+
   return (
     <section className="section-analytics">
       <div className="section-inner">
 
-      {/* Tab switcher — same as CalculatorForm */}
+      {/* Tab switcher */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -107,55 +93,61 @@ export default function Analytics({ onTabChange }: Props) {
           transition={{ duration: 0.45, delay: 0.08 }}
         >
           <p className="risk-card-label">Monte Carlo Simulation</p>
-          <span className="risk-badge-blue">1,000 simulations · 10-year horizon</span>
+          <span className="risk-badge-blue">1,000 simulations · {analyticsParams.horizonYears}-year horizon</span>
 
           <div style={{ flex: 1, minHeight: 0 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={MC_DATA} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
-                <XAxis
-                  dataKey="year"
-                  tickFormatter={(v) => `Yr ${v}`}
-                  tick={{ fontSize: 11, fill: "#94a3b8" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-                  tick={{ fontSize: 11, fill: "#94a3b8" }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={48}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "#ffffff",
-                    border: "1px solid rgba(0,0,0,0.08)",
-                    borderRadius: 12,
-                    fontSize: 12,
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-                  }}
-                  formatter={(value, name) => [
-                    typeof value === "number"
-                      ? value.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                          maximumFractionDigits: 0,
-                        })
-                      : String(value ?? ""),
-                    name === "p95"
-                      ? "95th Percentile"
-                      : name === "median"
-                      ? "Median"
-                      : "5th Percentile",
-                  ]}
-                  labelFormatter={(l) => `Year ${l}`}
-                />
-                <Line type="monotone" dataKey="p95" stroke="#22c55e" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="median" stroke="#2563eb" strokeWidth={2.5} dot={false} />
-                <Line type="monotone" dataKey="p5" stroke="#ef4444" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8", fontSize: 14 }}>
+                Loading simulation…
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={mcData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
+                  <XAxis
+                    dataKey="year"
+                    tickFormatter={(v) => `Yr ${v}`}
+                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                    tick={{ fontSize: 11, fill: "#94a3b8" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={48}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "#ffffff",
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      borderRadius: 12,
+                      fontSize: 12,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                    }}
+                    formatter={(value, name) => [
+                      typeof value === "number"
+                        ? value.toLocaleString("en-US", {
+                            style: "currency",
+                            currency: "USD",
+                            maximumFractionDigits: 0,
+                          })
+                        : String(value ?? ""),
+                      name === "p95"
+                        ? "95th Percentile"
+                        : name === "median"
+                        ? "Median"
+                        : "5th Percentile",
+                    ]}
+                    labelFormatter={(l) => `Year ${l}`}
+                  />
+                  <Line type="monotone" dataKey="p95" stroke="#22c55e" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="median" stroke="#2563eb" strokeWidth={2.5} dot={false} />
+                  <Line type="monotone" dataKey="p5" stroke="#ef4444" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
 
           {/* Legend */}
@@ -175,26 +167,32 @@ export default function Analytics({ onTabChange }: Props) {
 
         {/* Scenario cards */}
         <div className="scenario-cards-col">
-          {SCENARIOS.map((s, i) => (
-            <motion.div
-              key={s.id}
-              className={`scenario-card${s.featured ? " scenario-card--featured" : ""}`}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.12 + i * 0.08 }}
-            >
-              <p className={`risk-card-label${s.featured ? " risk-card-label--white" : ""}`}>
-                {s.label}
-              </p>
-              <span className={s.badgeClass}>{s.badge}</span>
-              <p className={`analytics-scenario-value${s.featured ? " scenario-value-white" : " scenario-value-dark"}`}>
-                {s.value}
-              </p>
-              <p className={`risk-card-desc${s.featured ? " risk-card-desc--white" : ""}`}>
-                {s.desc}
-              </p>
-            </motion.div>
-          ))}
+          {loading ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8", fontSize: 14 }}>
+              Loading scenarios…
+            </div>
+          ) : (
+            scenarios.map((s, i) => (
+              <motion.div
+                key={s.id}
+                className={`scenario-card${s.featured ? " scenario-card--featured" : ""}`}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, delay: 0.12 + i * 0.08 }}
+              >
+                <p className={`risk-card-label${s.featured ? " risk-card-label--white" : ""}`}>
+                  {s.label}
+                </p>
+                <span className={s.badgeClass}>{s.badge}</span>
+                <p className={`analytics-scenario-value${s.featured ? " scenario-value-white" : " scenario-value-dark"}`}>
+                  {s.value}
+                </p>
+                <p className={`risk-card-desc${s.featured ? " risk-card-desc--white" : ""}`}>
+                  {s.desc}
+                </p>
+              </motion.div>
+            ))
+          )}
         </div>
 
       </div>

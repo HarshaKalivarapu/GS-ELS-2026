@@ -27,12 +27,14 @@ type Props = {
   activeTab: string;
   onTabChange: (t: string) => void;
   initialSection?: number;
+  onPortfolioSubmit?: (params: { tickers: string[]; investmentAmount: number; horizonYears: number }) => void;
 };
 
 export default function Calculator({
   activeTab,
   onTabChange,
   initialSection = 0,
+  onPortfolioSubmit,
 }: Props) {
   const [tickerText, setTickerText] = useState("VFIAX FXAIX SWPPX");
   const [riskTolerance, setRiskTolerance] = useState(0.5);
@@ -135,6 +137,7 @@ export default function Calculator({
 
       const data = (await res.json()) as PortfolioRecommendation;
       setResult(data);
+      onPortfolioSubmit?.({ tickers, investmentAmount, horizonYears });
       setTimeout(() => goTo(2), 100);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
