@@ -5,6 +5,7 @@ import HeroSection from "./HeroSection";
 import CalculatorForm from "./CalculatorForm";
 import ResultsSection from "./ResultsSection";
 import RiskMetricsSection from "./RiskMetricsSection";
+import type { UserProfile } from "../../types/profile";
 
 const SECTION_BGS = ["#ffffff", "#ffffff", "#0f172a", "#f8fafc"];
 
@@ -28,6 +29,7 @@ type Props = {
   onTabChange: (t: string) => void;
   initialSection?: number;
   onPortfolioSubmit?: (params: { tickers: string[]; investmentAmount: number; horizonYears: number }) => void;
+  profile?: UserProfile | null;
 };
 
 export default function Calculator({
@@ -35,11 +37,36 @@ export default function Calculator({
   onTabChange,
   initialSection = 0,
   onPortfolioSubmit,
+  profile,
 }: Props) {
+
+  function mapRiskToleranceToNumber(
+    risk: "low" | "medium" | "high" | null | undefined
+  ): number {
+    if (risk === "low") return 0.17;
+    if (risk === "high") return 0.83;
+    return 0.5;
+  }
+
+  const currentYear = new Date().getFullYear();
+  const derivedAge = profile?.birthYear ? currentYear - profile.birthYear : null;
+  const derivedHorizon =
+    derivedAge && profile?.idealRetirementAge
+      ? Math.max(profile.idealRetirementAge - derivedAge, 1)
+      : 5;
+
+  const [riskTolerance, setRiskTolerance] = useState(
+    mapRiskToleranceToNumber(profile?.riskTolerance)
+  );
+  const [horizonYears, setHorizonYears] = useState(derivedHorizon);
+  const [investmentAmount, setInvestmentAmount] = useState(
+    profile?.monthlySavings ?? 10000
+  );
+
   const [tickerText, setTickerText] = useState("VFIAX FXAIX SWPPX");
-  const [riskTolerance, setRiskTolerance] = useState(0.5);
-  const [horizonYears, setHorizonYears] = useState(5);
-  const [investmentAmount, setInvestmentAmount] = useState(10000);
+  // const [riskTolerance, setRiskTolerance] = useState(0.5);
+  // const [horizonYears, setHorizonYears] = useState(5);
+  // const [investmentAmount, setInvestmentAmount] = useState(10000);
   const [result, setResult] = useState<PortfolioRecommendation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +127,19 @@ export default function Calculator({
       goTo(idxRef.current - 1);
     }
   }
+
+  useEffect(() => {
+    const currentYear = new Date().getFullYear();
+    const age = profile?.birthYear ? currentYear - profile.birthYear : null;
+    const horizon =
+      age && profile?.idealRetirementAge
+        ? Math.max(profile.idealRetirementAge - age, 1)
+        : 5;
+
+    setRiskTolerance(mapRiskToleranceToNumber(profile?.riskTolerance));
+    setHorizonYears(horizon);
+    setInvestmentAmount(profile?.monthlySavings ?? 10000);
+  }, [profile]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

@@ -10,7 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.4",
+    "@clerk/nextjs": "^7.0.7",
     "@fontsource/plus-jakarta-sans": "^5.2.8",
+    "@supabase/supabase-js": "^2.100.1",
     "framer-motion": "^12.36.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
