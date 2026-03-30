@@ -1807,3 +1807,240 @@ textarea.form-input-clean {
   letter-spacing: -0.01em;
   color: #0f172a;
 }
+
+
+.calc-display-with-ai {
+  position: relative;
+}
+
+/* .calc-ai-help-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition: transform 0.18s ease, background 0.18s ease, opacity 0.18s ease;
+} */
+
+.calc-ai-help-btn:hover:not(:disabled) {
+  transform: scale(1.06);
+  background: rgba(255,255,255,0.2);
+}
+
+.calc-ai-help-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+
+
+.ai-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.ai-modal-eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.ai-modal-title {
+  margin: 0;
+  font-size: 1.65rem;
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.ai-modal-close {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ai-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ai-modal-body section h4 {
+  margin: 0 0 8px;
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.ai-modal-body section p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.65;
+}
+
+.ai-tradeoff-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.ai-modal-loading {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #334155;
+}
+
+.ai-modal-spinner {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 3px solid rgba(37, 99, 235, 0.16);
+  border-top-color: #2563eb;
+  animation: ai-spin 0.85s linear infinite;
+}
+
+@keyframes ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .ai-modal {
+    width: calc(100vw - 20px);
+    max-height: 84vh;
+    padding: 20px 18px 18px;
+    border-radius: 20px;
+  }
+
+  .ai-modal-title {
+    font-size: 1.35rem;
+  }
+}
+
+.calc-ai-help-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px 9px 6px 12px;          /* ← makes it a pill */
+  height: auto;
+  min-width: auto;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.22);
+
+  background: rgba(255,255,255,0.14);
+  backdrop-filter: blur(10px);
+
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+
+  cursor: pointer;
+  z-index: 10;
+
+  transition: all 0.2s ease;
+}
+
+.calc-ai-help-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.ai-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  border: none;
+
+  background: rgba(0, 0, 0, 0.05);
+
+  font-size: 18px;
+  font-weight: 500;
+  color: #0f172a;
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.ai-modal-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+
+.ai-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.28);
+  backdrop-filter: blur(12px);
+  z-index: 120;
+}
+
+.ai-modal {
+  position: fixed;
+
+  /* center it */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) !important; 
+
+  /* size */
+  width: min(720px, calc(100vw - 32px));
+  max-height: 80vh;
+
+  /* scroll */
+  overflow-y: auto;
+
+  /* visuals */
+  z-index: 121;
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(22px);
+}

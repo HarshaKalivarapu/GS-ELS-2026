@@ -188,7 +188,7 @@ export default function Calculator({
 
   const pages = [
     <HeroSection key="hero" onStartCalculating={() => goTo(1)} />,
-    <CalculatorForm
+        <CalculatorForm
       key="form"
       tickerText={tickerText}
       tickers={tickers}
@@ -204,6 +204,8 @@ export default function Calculator({
       onHorizonChange={setHorizonYears}
       onAmountChange={setInvestmentAmount}
       onSubmit={handleRecommend}
+      result={result}
+      profile={profile}
     />,
     <ResultsSection
       key="results"
