@@ -11,6 +11,7 @@ Thumbs.db
 # Backend (Spring Boot / Maven)
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
+backend/src/main/resources/application.properties
 
 # IDE
 .vscode/
