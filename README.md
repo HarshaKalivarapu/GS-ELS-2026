@@ -53,12 +53,20 @@ Expected: {"status":"ok"}
 Open a new terminal:
 
 ```bash
-cd frontend\
-npm install\
+cd frontend
+npm install
 npm run dev
 ```
 
 Frontend will start on: http://localhost:5173 (Vite default)
+
+## 3) Create an account (Optional)
+
+You can setup an account with Clerk Auth using your personal email, put in your preferences and your account will be created and stored in our backend database.
+
+## 4) Additional AI Features (Optional)
+
+You can replace the dummy API key (openai.api.key) with your own OpenAPI key in the backend/src/main/resources/application.properties file.
 
 # How Frontend ↔ Backend Communication Works
 
@@ -169,8 +177,8 @@ Dependencies and scripts.
 
 From frontend/:
 
-npm run dev --- Start dev server\
-npm run build --- Build production bundle\
+npm run dev --- Start dev server
+npm run build --- Build production bundle
 npm run preview --- Preview production build
 
 
