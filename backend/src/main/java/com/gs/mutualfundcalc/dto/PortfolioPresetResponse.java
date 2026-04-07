@@ -2,10 +2,10 @@ package com.gs.mutualfundcalc.dto;
 
 import java.util.List;
 
-public record PortfolioRequest(
+public record PortfolioPresetResponse(
+    String presetName,
     List<String> tickers,
     List<Double> weights,
-    double riskTolerance,
-    int horizonYears,
-    double investmentAmount
+    String riskTolerance,
+    String reason
 ) {}

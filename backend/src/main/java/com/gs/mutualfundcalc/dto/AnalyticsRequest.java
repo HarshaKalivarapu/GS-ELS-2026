@@ -5,5 +5,6 @@ import java.util.List;
 public record AnalyticsRequest(
     List<String> tickers,
     double investmentAmount,
-    int horizonYears
+    int horizonYears,
+    double riskTolerance
 ) {}

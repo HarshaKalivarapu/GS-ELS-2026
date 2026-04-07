@@ -15,10 +15,17 @@ function AllocationLegend({ data }: { data: { name: string; value: number }[] })
     <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
       {data.map((entry, i) => (
         <div key={entry.name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 12, height: 12, borderRadius: "50%", background: COLORS[i % COLORS.length], flexShrink: 0 }} />
+          <div
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              background: COLORS[i % COLORS.length],
+              flexShrink: 0,
+            }}
+          />
           <span style={{ fontSize: 14, color: "#374151", fontWeight: 500 }}>
-            {entry.name}{" "}
-            <span style={{ color: "#94a3b8" }}>— {entry.value}%</span>
+            {entry.name} <span style={{ color: "#94a3b8" }}>— {entry.value}%</span>
           </span>
         </div>
       ))}
@@ -30,14 +37,20 @@ const RISK_FREE_RATE = 0.045;
 const MARKET_VOLATILITY = 0.15;
 
 function calcVaR(funds: PortfolioRecommendation["funds"], amount: number): number {
-  const avgBeta = funds.reduce((s, f) => s + f.beta, 0) / funds.length;
-  return amount * avgBeta * MARKET_VOLATILITY * 1.645;
+  const weightedBeta =
+    funds.reduce((sum, f) => sum + f.beta * f.weight, 0);
+
+  return amount * weightedBeta * MARKET_VOLATILITY * 1.645;
 }
 
 function calcSharpe(funds: PortfolioRecommendation["funds"]): number {
-  const avgReturn = funds.reduce((s, f) => s + f.expectedReturnRate, 0) / funds.length;
-  const avgBeta = funds.reduce((s, f) => s + f.beta, 0) / funds.length;
-  return (avgReturn - RISK_FREE_RATE) / (avgBeta * MARKET_VOLATILITY);
+  const weightedReturn =
+    funds.reduce((sum, f) => sum + f.expectedReturnRate * f.weight, 0);
+
+  const weightedBeta =
+    funds.reduce((sum, f) => sum + f.beta * f.weight, 0);
+
+  return (weightedReturn - RISK_FREE_RATE) / (weightedBeta * MARKET_VOLATILITY);
 }
 
 type Props = {
@@ -49,18 +62,17 @@ export default function RiskMetricsSection({ result, investmentAmount }: Props) 
   const var95 = result ? calcVaR(result.funds, investmentAmount) : null;
   const sharpe = result ? calcSharpe(result.funds) : null;
   const isGoodSharpe = sharpe !== null && sharpe >= 1;
+
   const pieData = result
     ? result.funds.map((f) => ({
         name: f.ticker,
-        value: Math.round((f.principal / investmentAmount) * 100),
+        value: Math.round(f.weight * 100),
       }))
     : [];
 
   return (
     <section className="section-risk">
       <div className="section-inner" style={{ display: "flex", flexDirection: "column" }}>
-
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -72,15 +84,12 @@ export default function RiskMetricsSection({ result, investmentAmount }: Props) 
             Portfolio risk analysis
           </h2>
           <p className="section-subtext-muted" style={{ maxWidth: 520 }}>
-            Key risk indicators derived from your portfolio's beta, expected
-            returns, and a 4.5% risk-free rate assumption.
+            Key risk indicators derived from your portfolio's weighted beta,
+            weighted expected return, and a 4.5% risk-free rate assumption.
           </p>
         </motion.div>
 
-        {/* Asymmetric 2-col grid: VaR + Sharpe left, Allocation right */}
         <div className="risk-cards-grid">
-
-          {/* VaR Card */}
           <motion.div
             className="risk-card"
             initial={{ opacity: 0, y: 24 }}
@@ -91,7 +100,11 @@ export default function RiskMetricsSection({ result, investmentAmount }: Props) 
             <span className="risk-badge-warning">1-year, 95% confidence</span>
             <p className="risk-card-value">
               {var95 !== null
-                ? var95.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+                ? var95.toLocaleString("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                    maximumFractionDigits: 0,
+                  })
                 : "—"}
             </p>
             <p className="risk-card-desc">
@@ -101,7 +114,6 @@ export default function RiskMetricsSection({ result, investmentAmount }: Props) 
             </p>
           </motion.div>
 
-          {/* Allocation Card — spans both rows on the right */}
           <motion.div
             className="risk-card risk-card--tall"
             style={{ padding: 36 }}
@@ -112,9 +124,10 @@ export default function RiskMetricsSection({ result, investmentAmount }: Props) 
             <p className="risk-card-label">Portfolio Allocation</p>
             <p className="risk-card-desc">
               {result
-                ? `Equal-weight split across ${result.funds.length} fund${result.funds.length !== 1 ? "s" : ""}.`
+                ? `Risk-based allocation across ${result.funds.length} fund${result.funds.length !== 1 ? "s" : ""}.`
                 : "Submit a calculation to see your allocation breakdown."}
             </p>
+
             <div className="risk-card-chart">
               {result ? (
                 <ResponsiveContainer width="100%" height={220}>
@@ -146,17 +159,24 @@ export default function RiskMetricsSection({ result, investmentAmount }: Props) 
                 </ResponsiveContainer>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-                  <div style={{ width: 120, height: 120, borderRadius: "50%", border: "16px solid #f1f5f9" }} />
+                  <div
+                    style={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: "50%",
+                      border: "16px solid #f1f5f9",
+                    }}
+                  />
                   <p style={{ fontSize: "0.82rem", color: "#94a3b8", margin: 0 }}>
                     Submit a calculation to see your allocation breakdown.
                   </p>
                 </div>
               )}
             </div>
+
             {result && <AllocationLegend data={pieData} />}
           </motion.div>
 
-          {/* Sharpe Ratio Card */}
           <motion.div
             className="risk-card"
             initial={{ opacity: 0, y: 24 }}
@@ -166,7 +186,9 @@ export default function RiskMetricsSection({ result, investmentAmount }: Props) 
             <p className="risk-card-label">Sharpe Ratio</p>
             <span className={isGoodSharpe ? "risk-badge-positive" : "risk-badge-warning"}>
               {sharpe !== null
-                ? (isGoodSharpe ? "Good risk-adjusted return" : "Moderate risk-adjusted return")
+                ? isGoodSharpe
+                  ? "Good risk-adjusted return"
+                  : "Moderate risk-adjusted return"
                 : "Risk-adjusted return"}
             </span>
             <p className="risk-card-value">{sharpe !== null ? sharpe.toFixed(2) : "—"}</p>
@@ -176,7 +198,6 @@ export default function RiskMetricsSection({ result, investmentAmount }: Props) 
                 : "Submit a calculation to see your portfolio's Sharpe Ratio."}
             </p>
           </motion.div>
-
         </div>
       </div>
     </section>

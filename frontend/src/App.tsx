@@ -1,27 +1,45 @@
 import { useEffect, useState } from "react";
-import { SignInButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/clerk-react";
 import "./App.css";
 import Calculator from "./components/Calculator";
 import Analytics from "./components/Analytics";
 import type { AnalyticsRequest } from "./types";
 import type { UserProfile } from "./types/profile";
-import LoadingScreen from "./components/LoadingScreen";
 
 import { getProfile } from "./services/profileService";
 import CreateProfile from "./components/Profile/CreateProfile";
+import LoadingScreen from "./components/LoadingScreen";
 
-// Default params used in Analytics before the user runs a calculation
 const DEFAULT_ANALYTICS: AnalyticsRequest = {
-  tickers: ["VFIAX", "FXAIX", "SWPPX"],
+  tickers: ["VTI", "VXUS", "BND"],
   investmentAmount: 10_000,
   horizonYears: 10,
+  riskTolerance: 0.5,
 };
+
+function TopRightAuth() {
+  return (
+    <div className="auth-container">
+      <SignedOut>
+        <SignInButton mode="modal">
+          <button className="auth-signin-btn">Sign in</button>
+        </SignInButton>
+      </SignedOut>
+
+      <SignedIn>
+        <div className="auth-user-wrapper">
+          <UserButton afterSignOutUrl="/" />
+        </div>
+      </SignedIn>
+    </div>
+  );
+}
 
 export default function App() {
   const { isLoaded, isSignedIn, user } = useUser();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState<"calculator" | "advanced">("calculator");
   const [calcInitialSection, setCalcInitialSection] = useState(0);
@@ -29,26 +47,25 @@ export default function App() {
     useState<AnalyticsRequest>(DEFAULT_ANALYTICS);
 
   useEffect(() => {
-    async function load() {
+    async function loadProfile() {
       if (!isLoaded) return;
 
       if (!isSignedIn || !user) {
         setProfile(null);
-        setLoadingProfile(false);
+        setProfileLoading(false);
         return;
       }
 
-      const p = await getProfile(user.id);
-      setProfile(p);
-
-      if (p && p.profileCompleted) {
-        setCalcInitialSection(1); 
+      try {
+        setProfileLoading(true);
+        const p = await getProfile(user.id);
+        setProfile(p);
+      } finally {
+        setProfileLoading(false);
       }
-
-      setLoadingProfile(false);
     }
 
-    load();
+    loadProfile();
   }, [isLoaded, isSignedIn, user]);
 
   const handleTabChange = (t: string) => {
@@ -60,68 +77,54 @@ export default function App() {
     setAnalyticsParams(params);
   };
 
-  if (!isLoaded || loadingProfile) {
-    return <LoadingScreen text="Loading your workspace..." />;
+  if (!isLoaded) {
+    return <LoadingScreen text="Loading..." />;
   }
 
-  // signed in but no completed profile -> show profile creation
-  if (isSignedIn && user && (!profile || !profile.profileCompleted)) {
-    return (
-      <>
-        <div className="auth-top-right">
-          <UserButton />
-        </div>
-
-        <CreateProfile
-          userId={user.id}
-          name={user.fullName ?? ""}
-          email={user.primaryEmailAddress?.emailAddress ?? ""}
-        />
-      </>
-    );
-  }
+  const signedInButNeedsProfile =
+    isSignedIn && user && (!profile || !profile.profileCompleted);
 
   return (
-    <div className="app-shell">
-      <div className="auth-top-right">
-        <SignedOut>
-          <SignInButton mode="modal">
-            <button className="pill-cta-blue">Sign in</button>
-          </SignInButton>
-        </SignedOut>
+    <>
+      <TopRightAuth />
 
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
-      </div>
+      {signedInButNeedsProfile ? (
+        <CreateProfile
+          userId={user.id}
+          name={user.fullName ?? user.firstName ?? ""}
+          email={user.primaryEmailAddress?.emailAddress ?? ""}
+        />
+      ) : (
+        <div className="app-shell">
+          <main>
+            {activeTab === "calculator" && (
+              <Calculator
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                initialSection={calcInitialSection}
+                onPortfolioSubmit={handlePortfolioSubmit}
+                profile={isSignedIn ? profile : null}
+              />
+            )}
 
-      <main>
-        {activeTab === "calculator" && (
-          <Calculator
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            initialSection={calcInitialSection}
-            onPortfolioSubmit={handlePortfolioSubmit}
-            profile={profile}
-          />
-        )}
-
-        {activeTab === "advanced" && (
-          <div
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "#f8fafc",
-              overflowY: "auto",
-            }}
-          >
-            <Analytics
-              onTabChange={handleTabChange}
-              analyticsParams={analyticsParams}
-            />
-          </div>
-        )}
-      </main>
-    </div>
+            {activeTab === "advanced" && (
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  background: "#f8fafc",
+                  overflowY: "auto",
+                }}
+              >
+                <Analytics
+                  onTabChange={handleTabChange}
+                  analyticsParams={analyticsParams}
+                />
+              </div>
+            )}
+          </main>
+        </div>
+      )}
+    </>
   );
 }

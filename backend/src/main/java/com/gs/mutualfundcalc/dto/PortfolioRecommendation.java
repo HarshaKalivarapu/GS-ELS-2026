@@ -10,6 +10,7 @@ public record PortfolioRecommendation(
     public record FundResult(
         String ticker,
         double principal,
+        double weight,              // ✅ NEW FIELD
         double beta,
         double expectedReturnRate,
         double capmRate,

@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { PortfolioRecommendation, PortfolioRequest } from "../../types";
+import type {
+  PortfolioRecommendation,
+  PortfolioRequest,
+  AnalyticsRequest,
+  PortfolioPreset,
+} from "../../types";
+import type { UserProfile } from "../../types/profile";
 import HeroSection from "./HeroSection";
 import CalculatorForm from "./CalculatorForm";
 import ResultsSection from "./ResultsSection";
 import RiskMetricsSection from "./RiskMetricsSection";
-import type { UserProfile } from "../../types/profile";
+import { fetchPortfolioPreset } from "../../services/presetService";
 
 const SECTION_BGS = ["#ffffff", "#ffffff", "#0f172a", "#f8fafc"];
 
@@ -24,11 +30,17 @@ function parseTickers(input: string): string[] {
     .filter(Boolean);
 }
 
+function riskStringToSlider(value: "low" | "medium" | "high"): number {
+  if (value === "low") return 0.17;
+  if (value === "high") return 0.83;
+  return 0.5;
+}
+
 type Props = {
   activeTab: string;
   onTabChange: (t: string) => void;
   initialSection?: number;
-  onPortfolioSubmit?: (params: { tickers: string[]; investmentAmount: number; horizonYears: number }) => void;
+  onPortfolioSubmit?: (params: AnalyticsRequest) => void;
   profile?: UserProfile | null;
 };
 
@@ -39,37 +51,15 @@ export default function Calculator({
   onPortfolioSubmit,
   profile,
 }: Props) {
-
-  function mapRiskToleranceToNumber(
-    risk: "low" | "medium" | "high" | null | undefined
-  ): number {
-    if (risk === "low") return 0.17;
-    if (risk === "high") return 0.83;
-    return 0.5;
-  }
-
-  const currentYear = new Date().getFullYear();
-  const derivedAge = profile?.birthYear ? currentYear - profile.birthYear : null;
-  const derivedHorizon =
-    derivedAge && profile?.idealRetirementAge
-      ? Math.max(profile.idealRetirementAge - derivedAge, 1)
-      : 5;
-
-  const [riskTolerance, setRiskTolerance] = useState(
-    mapRiskToleranceToNumber(profile?.riskTolerance)
-  );
-  const [horizonYears, setHorizonYears] = useState(derivedHorizon);
-  const [investmentAmount, setInvestmentAmount] = useState(
-    profile?.monthlySavings ?? 10000
-  );
-
-  const [tickerText, setTickerText] = useState("VFIAX FXAIX SWPPX");
-  // const [riskTolerance, setRiskTolerance] = useState(0.5);
-  // const [horizonYears, setHorizonYears] = useState(5);
-  // const [investmentAmount, setInvestmentAmount] = useState(10000);
+  const [tickerText, setTickerText] = useState("VTI VXUS BND");
+  const [riskTolerance, setRiskTolerance] = useState(0.5);
+  const [horizonYears, setHorizonYears] = useState(5);
+  const [investmentAmount, setInvestmentAmount] = useState(10000);
   const [result, setResult] = useState<PortfolioRecommendation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [preset, setPreset] = useState<PortfolioPreset | null>(null);
 
   const [sectionIdx, setSectionIdx] = useState(initialSection);
   const [direction, setDirection] = useState(1);
@@ -77,11 +67,30 @@ export default function Calculator({
   const busy = useRef(false);
   const idxRef = useRef(initialSection);
   const lastNavTimeRef = useRef(0);
+  const didLoadPresetRef = useRef(false);
 
   const tickers = useMemo(() => parseTickers(tickerText), [tickerText]);
 
   const maxSectionRef = useRef(1);
   maxSectionRef.current = result ? SECTION_BGS.length - 1 : 1;
+
+  useEffect(() => {
+    async function loadPreset() {
+      if (!profile || didLoadPresetRef.current) return;
+
+      try {
+        const recommendedPreset = await fetchPortfolioPreset(profile);
+        setPreset(recommendedPreset);
+        setTickerText(recommendedPreset.tickers.join(" "));
+        setRiskTolerance(riskStringToSlider(recommendedPreset.riskTolerance));
+        didLoadPresetRef.current = true;
+      } catch (e) {
+        console.error("Failed to load preset:", e);
+      }
+    }
+
+    loadPreset();
+  }, [profile]);
 
   const goTo = useCallback((next: number) => {
     const cur = idxRef.current;
@@ -129,19 +138,6 @@ export default function Calculator({
   }
 
   useEffect(() => {
-    const currentYear = new Date().getFullYear();
-    const age = profile?.birthYear ? currentYear - profile.birthYear : null;
-    const horizon =
-      age && profile?.idealRetirementAge
-        ? Math.max(profile.idealRetirementAge - age, 1)
-        : 5;
-
-    setRiskTolerance(mapRiskToleranceToNumber(profile?.riskTolerance));
-    setHorizonYears(horizon);
-    setInvestmentAmount(profile?.monthlySavings ?? 10000);
-  }, [profile]);
-
-  useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "ArrowDown" || e.key === "PageDown") goTo(idxRef.current + 1);
       if (e.key === "ArrowUp" || e.key === "PageUp") goTo(idxRef.current - 1);
@@ -158,6 +154,9 @@ export default function Calculator({
 
     const payload: PortfolioRequest = {
       tickers,
+      weights: preset?.tickers.join(" ") === tickerText.trim()
+        ? preset.weights
+        : undefined,
       riskTolerance,
       horizonYears,
       investmentAmount,
@@ -177,7 +176,14 @@ export default function Calculator({
 
       const data = (await res.json()) as PortfolioRecommendation;
       setResult(data);
-      onPortfolioSubmit?.({ tickers, investmentAmount, horizonYears });
+
+      onPortfolioSubmit?.({
+        tickers,
+        investmentAmount,
+        horizonYears,
+        riskTolerance,
+      });
+
       setTimeout(() => goTo(2), 100);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -188,7 +194,7 @@ export default function Calculator({
 
   const pages = [
     <HeroSection key="hero" onStartCalculating={() => goTo(1)} />,
-        <CalculatorForm
+    <CalculatorForm
       key="form"
       tickerText={tickerText}
       tickers={tickers}
@@ -206,6 +212,7 @@ export default function Calculator({
       onSubmit={handleRecommend}
       result={result}
       profile={profile}
+      preset={preset}
     />,
     <ResultsSection
       key="results"

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import type { PortfolioRecommendation } from "../../types";
+import type { PortfolioRecommendation, PortfolioPreset } from "../../types";
 import type { UserProfile } from "../../types/profile";
 import type { PortfolioExplanation } from "../../types/ai";
 import { fetchPortfolioExplanation } from "./aiService";
@@ -23,6 +23,7 @@ type Props = {
   onSubmit: () => void;
   result: PortfolioRecommendation | null;
   profile?: UserProfile | null;
+  preset?: PortfolioPreset | null;
 };
 
 function riskLabel(v: number): string {
@@ -53,7 +54,7 @@ function buildFallbackRecommendation(
     horizonYears,
     expectedAnnualReturn,
     projectedPortfolioValue,
-    recommendedFundTickers: tickers.length > 0 ? tickers : ["VFIAX", "FXAIX", "SWPPX"],
+    recommendedFundTickers: tickers.length > 0 ? tickers : ["VTI", "VXUS", "BND"],
     recommendedAllocations:
       tickers.length > 0
         ? tickers.map((ticker) => ({
@@ -62,9 +63,9 @@ function buildFallbackRecommendation(
             category: "Fund",
           }))
         : [
-            { ticker: "VFIAX", weight: 33.33, category: "Fund" },
-            { ticker: "FXAIX", weight: 33.33, category: "Fund" },
-            { ticker: "SWPPX", weight: 33.34, category: "Fund" },
+            { ticker: "VTI", weight: 60, category: "Fund" },
+            { ticker: "VXUS", weight: 20, category: "Fund" },
+            { ticker: "BND", weight: 20, category: "Fund" },
           ],
   };
 }
@@ -137,6 +138,7 @@ function mapRecommendation(
     recommendedAllocations,
   };
 }
+
 export default function CalculatorForm({
   tickerText,
   tickers,
@@ -154,18 +156,17 @@ export default function CalculatorForm({
   onSubmit,
   result,
   profile,
+  preset,
 }: Props) {
   const [showExplanation, setShowExplanation] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiExplanation, setAiExplanation] = useState<PortfolioExplanation | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
 
   async function handleOpenExplanation() {
     setShowExplanation(true);
 
     try {
       setAiLoading(true);
-      setAiError(null);
 
       const recommendation = result
         ? mapRecommendation(result, investmentAmount, horizonYears)
@@ -183,12 +184,7 @@ export default function CalculatorForm({
 
       setAiExplanation(explanation);
     } catch (e) {
-      const message =
-        e instanceof Error ? e.message : "Failed to generate explanation";
-
-      console.error("AI explanation error:", message, e);
-      setAiError(message);
-      console.log(aiError)
+      console.error("AI explanation error:", e);
 
       setAiExplanation({
         summary:
@@ -201,12 +197,12 @@ export default function CalculatorForm({
             : "This setup is aggressive because it assumes a higher-risk, higher-return profile over the selected time horizon.",
         tickerExplanation:
           tickers.length > 0
-            ? `The selected funds (${tickers.join(", ")}) are being used as the basis for the recommendation and are weighted evenly in the fallback explanation.`
-            : "The fallback explanation assumes a simple diversified mutual fund mix based on the default inputs.",
+            ? `The selected funds (${tickers.join(", ")}) are being used as the basis for the recommendation.`
+            : "The fallback explanation assumes a simple diversified fund mix based on the default inputs.",
         tradeoffs: [
           "Higher expected returns usually come with more volatility.",
           "Longer horizons can better absorb short-term fluctuations.",
-          "Using a small set of funds is simple, but may reduce diversification depending on what they hold.",
+          "Diversification across fund types can reduce concentration risk.",
         ],
       });
     } finally {
@@ -254,15 +250,77 @@ export default function CalculatorForm({
               Enter mutual funds and investment details
             </h2>
             <p className="section-subtext-muted" style={{ margin: 0 }}>
-              Add one or more fund tickers, set your investment amount and time
-              horizon. Returns are split equally across all selected funds.
+              Start from a recommended preset, then customize it if you want.
             </p>
+
+            {preset && (
+              <div
+                style={{
+                  background: "rgba(37,99,235,0.06)",
+                  border: "1px solid rgba(37,99,235,0.12)",
+                  borderRadius: 22,
+                  padding: 20,
+                }}
+              >
+                <p
+                  style={{
+                    margin: "0 0 6px",
+                    color: "#2563eb",
+                    fontSize: "0.78rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Recommended preset
+                </p>
+
+                <h3
+                  style={{
+                    margin: "0 0 10px",
+                    fontSize: "1.3rem",
+                    color: "#0f172a",
+                  }}
+                >
+                  {preset.presetName}
+                </h3>
+
+                <p
+                  style={{
+                    margin: "0 0 12px",
+                    color: "#475569",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {preset.reason}
+                </p>
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {preset.tickers.map((ticker, idx) => (
+                    <span
+                      key={ticker}
+                      style={{
+                        background: "#ffffff",
+                        color: "#0f172a",
+                        border: "1px solid rgba(15,23,42,0.06)",
+                        borderRadius: 9999,
+                        padding: "6px 10px",
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {ticker} — {Math.round((preset.weights[idx] ?? 0) * 100)}%
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 4 }}>
               {[
-                "Beta sourced from live market data",
-                "Analyze multiple funds simultaneously",
-                "CAPM-powered expected return calculations",
+                "Preset adapts to saved profile preferences",
+                "Stress tests improve with diversified inputs",
+                "You can still override every field manually",
               ].map((label, i) => (
                 <motion.div
                   key={label}
@@ -319,7 +377,7 @@ export default function CalculatorForm({
                   aria-label="Explain this portfolio"
                   title="Explain this portfolio"
                 >
-                  AI✨
+                  AI ✨
                 </button>
 
                 <div className="calc-display-label">Portfolio Value</div>
@@ -327,7 +385,7 @@ export default function CalculatorForm({
                   ${investmentAmount.toLocaleString()}
                 </div>
                 <div className="calc-display-sub">
-                  {horizonYears}yr horizon &middot; {riskLabel(riskTolerance)} risk
+                  {horizonYears}yr horizon · {riskLabel(riskTolerance)} risk
                 </div>
               </div>
 
@@ -337,7 +395,7 @@ export default function CalculatorForm({
                   className="calc-input"
                   value={tickerText}
                   onChange={(e) => onTickerChange(e.target.value)}
-                  placeholder="VFIAX  FXAIX  SWPPX"
+                  placeholder="VTI VXUS BND"
                 />
               </div>
 
@@ -373,6 +431,7 @@ export default function CalculatorForm({
                     onChange={(e) => onHorizonChange(Number(e.target.value))}
                   />
                 </div>
+
                 <div className="calc-field" style={{ margin: 0 }}>
                   <label className="calc-field-label">Amount ($)</label>
                   <input
@@ -389,7 +448,12 @@ export default function CalculatorForm({
                 className="pill-cta-white"
                 onClick={onSubmit}
                 disabled={loading || tickers.length === 0}
-                style={{ width: "100%", justifyContent: "center", padding: "18px 28px", fontSize: "1.05rem" }}
+                style={{
+                  width: "100%",
+                  justifyContent: "center",
+                  padding: "18px 28px",
+                  fontSize: "1.05rem",
+                }}
               >
                 {loading ? "Calculating..." : "Get future value"}
               </button>
@@ -410,7 +474,6 @@ export default function CalculatorForm({
                   {error}
                 </div>
               )}
-
             </div>
           </motion.div>
         </div>
