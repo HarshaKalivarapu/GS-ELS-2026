@@ -59,6 +59,7 @@ public class PortfolioService {
         }
 
         double riskFreeRate = 0.04;
+        double taxRate = estimateTaxRate(req.income(), years);
 
         List<PortfolioRecommendation.FundResult> results = tickers.stream().map(ticker -> {
             String normalizedTicker = ticker.toUpperCase();
@@ -72,6 +73,10 @@ public class PortfolioService {
             double capmRate = riskFreeRate + beta * (expectedReturn - riskFreeRate);
             double fv = principal * Math.exp(capmRate * years);
 
+            double gain = Math.max(0, fv - principal);
+            double taxOwed = gain * taxRate;
+            double fvAfterTax = fv - taxOwed;
+
             return new PortfolioRecommendation.FundResult(
                     normalizedTicker,
                     principal,
@@ -79,7 +84,9 @@ public class PortfolioService {
                     beta,
                     expectedReturn,
                     capmRate,
-                    fv
+                    fv,
+                    fvAfterTax,
+                    taxOwed
             );
         }).toList();
 
@@ -87,11 +94,45 @@ public class PortfolioService {
                 .mapToDouble(PortfolioRecommendation.FundResult::futureValue)
                 .sum();
 
+        double totalFVAfterTax = results.stream()
+                .mapToDouble(PortfolioRecommendation.FundResult::futureValueAfterTax)
+                .sum();
+
+        double totalTaxOwed = results.stream()
+                .mapToDouble(PortfolioRecommendation.FundResult::taxOwed)
+                .sum();
+
         String explanation =
                 "Portfolio uses preset or risk-based allocation instead of equal weighting. " +
                 "Returns calculated using CAPM and continuous compounding.";
 
-        return new PortfolioRecommendation(results, totalFV, explanation);
+        return new PortfolioRecommendation(results, totalFV, totalFVAfterTax, totalTaxOwed, taxRate, explanation);
+    }
+
+    /**
+     * Estimates the federal capital gains tax rate based on income and holding period.
+     * Short-term (< 1 year): taxed as ordinary income using simplified brackets.
+     * Long-term (>= 1 year): 0%, 15%, or 20% based on income.
+     * Defaults to 15% if income is not provided.
+     */
+    private double estimateTaxRate(Double income, int horizonYears) {
+        if (horizonYears < 1) {
+            // Short-term capital gains — taxed as ordinary income
+            if (income == null) return 0.22;
+            if (income <= 11_600)  return 0.10;
+            if (income <= 47_150)  return 0.12;
+            if (income <= 100_525) return 0.22;
+            if (income <= 191_950) return 0.24;
+            if (income <= 243_725) return 0.32;
+            if (income <= 609_350) return 0.35;
+            return 0.37;
+        }
+
+        // Long-term capital gains
+        if (income == null) return 0.15;
+        if (income <= 47_025)  return 0.0;
+        if (income <= 518_900) return 0.15;
+        return 0.20;
     }
 
     private String mapRiskTolerance(double r) {

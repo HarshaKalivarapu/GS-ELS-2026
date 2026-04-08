@@ -160,6 +160,7 @@ export default function Calculator({
       riskTolerance,
       horizonYears,
       investmentAmount,
+      income: profile?.income ?? null,
     };
 
     try {

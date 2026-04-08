@@ -7,5 +7,6 @@ public record PortfolioRequest(
     List<Double> weights,
     double riskTolerance,
     int horizonYears,
-    double investmentAmount
+    double investmentAmount,
+    Double income
 ) {}

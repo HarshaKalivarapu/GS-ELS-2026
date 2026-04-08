@@ -4,6 +4,7 @@ export type PortfolioRequest = {
   riskTolerance: number;
   horizonYears: number;
   investmentAmount: number;
+  income?: number | null;
 };
 
 export type FundResult = {
@@ -14,11 +15,16 @@ export type FundResult = {
   expectedReturnRate: number;
   capmRate: number;
   futureValue: number;
+  futureValueAfterTax: number;
+  taxOwed: number;
 };
 
 export type PortfolioRecommendation = {
   funds: FundResult[];
   totalFutureValue: number;
+  totalFutureValueAfterTax: number;
+  totalTaxOwed: number;
+  taxRate: number;
   explanation: string;
 };
 
