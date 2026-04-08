@@ -8,6 +8,7 @@ import type { UserProfile } from "./types/profile";
 
 import { getProfile } from "./services/profileService";
 import CreateProfile from "./components/Profile/CreateProfile";
+import ProfileModal from "./components/Profile/ProfileModal";
 import LoadingScreen from "./components/LoadingScreen";
 
 const DEFAULT_ANALYTICS: AnalyticsRequest = {
@@ -17,7 +18,7 @@ const DEFAULT_ANALYTICS: AnalyticsRequest = {
   riskTolerance: 0.5,
 };
 
-function TopRightAuth() {
+function TopRightAuth({ onProfileClick }: { onProfileClick?: () => void }) {
   return (
     <div className="auth-container">
       <SignedOut>
@@ -30,6 +31,18 @@ function TopRightAuth() {
         <div className="auth-user-wrapper">
           <UserButton afterSignOutUrl="/" />
         </div>
+        {onProfileClick && (
+          <button className="profile-trigger-btn" onClick={onProfileClick} aria-label="View profile">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="4" x2="20" y2="4" />
+              <circle cx="8" cy="4" r="2" fill="#374151" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <circle cx="16" cy="12" r="2" fill="#374151" />
+              <line x1="4" y1="20" x2="20" y2="20" />
+              <circle cx="11" cy="20" r="2" fill="#374151" />
+            </svg>
+          </button>
+        )}
       </SignedIn>
     </div>
   );
@@ -41,6 +54,7 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"calculator" | "advanced">("calculator");
   const [calcInitialSection, setCalcInitialSection] = useState(0);
   const [analyticsParams, setAnalyticsParams] =
@@ -86,7 +100,18 @@ export default function App() {
 
   return (
     <>
-      <TopRightAuth />
+      <TopRightAuth onProfileClick={isSignedIn && profile ? () => setShowProfileModal(true) : undefined} />
+
+      {showProfileModal && profile && (
+        <ProfileModal
+          profile={profile}
+          onClose={() => setShowProfileModal(false)}
+          onProfileUpdated={(updated) => {
+            setProfile(updated);
+            setShowProfileModal(false);
+          }}
+        />
+      )}
 
       {signedInButNeedsProfile ? (
         <CreateProfile
