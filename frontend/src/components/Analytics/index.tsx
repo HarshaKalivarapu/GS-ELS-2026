@@ -15,11 +15,14 @@ import type {
   ScenarioResult,
   StressEventResult,
 } from "../../types";
+import type { UserProfile } from "../../types/profile";
 import StressExplanationModal from "./StressExplanationModal";
+import AiHighlight from "../AiHighlight";
 
 type Props = {
   onTabChange: (t: string) => void;
   analyticsParams: AnalyticsRequest;
+  profile?: UserProfile | null;
 };
 
 function pct(value: number): string {
@@ -57,7 +60,7 @@ function buildStressExplanation(event: StressEventResult): string {
   )}, which highlights the gap between expected compounding and realized crisis behavior.`;
 }
 
-export default function Analytics({ onTabChange, analyticsParams }: Props) {
+export default function Analytics({ onTabChange, analyticsParams, profile }: Props) {
   const [mcData, setMcData] = useState<MonteCarloPoint[]>([]);
   const [scenarios, setScenarios] = useState<ScenarioResult[]>([]);
   const [stressEvents, setStressEvents] = useState<StressEventResult[]>([]);
@@ -501,6 +504,26 @@ export default function Analytics({ onTabChange, analyticsParams }: Props) {
         title={selectedStressEvent ? selectedStressEvent.label : ""}
         body={stressExplanationBody}
         onClose={() => setSelectedStressEvent(null)}
+      />
+
+      <AiHighlight
+        context={{
+          profile: profile ?? null,
+          portfolioInputs: {
+            tickers: analyticsParams.tickers,
+            investmentAmount: analyticsParams.investmentAmount,
+            horizonYears: analyticsParams.horizonYears,
+            riskTolerance: analyticsParams.riskTolerance,
+          },
+          portfolioResult: null,
+          riskMetrics: null,
+          analytics: {
+            monteCarlo: mcData.length > 0 ? mcData : null,
+            scenarios: scenarios.length > 0 ? scenarios : null,
+            stressTests: stressEvents.length > 0 ? stressEvents : null,
+          },
+          currentScreen: "analytics",
+        }}
       />
     </section>
   );

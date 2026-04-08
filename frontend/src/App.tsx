@@ -144,6 +144,7 @@ export default function App() {
                 <Analytics
                   onTabChange={handleTabChange}
                   analyticsParams={analyticsParams}
+                  profile={isSignedIn ? profile : null}
                 />
               </div>
             )}

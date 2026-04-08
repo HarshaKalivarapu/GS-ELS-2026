@@ -11,9 +11,13 @@ import HeroSection from "./HeroSection";
 import CalculatorForm from "./CalculatorForm";
 import ResultsSection from "./ResultsSection";
 import RiskMetricsSection from "./RiskMetricsSection";
+import AiHighlight from "../AiHighlight";
 import { fetchPortfolioPreset } from "../../services/presetService";
 
 const SECTION_BGS = ["#ffffff", "#ffffff", "#0f172a", "#f8fafc"];
+const SECTION_NAMES = ["hero", "form", "results", "riskMetrics"];
+const RISK_FREE_RATE = 0.045;
+const MARKET_VOLATILITY = 0.15;
 
 const pageVariants = {
   enter: (dir: number) => ({ opacity: 0, y: dir > 0 ? 40 : -40 }),
@@ -229,12 +233,37 @@ export default function Calculator({
     />,
   ];
 
+  const sharpeRatio = result
+    ? (result.funds.reduce((s, f) => s + f.expectedReturnRate * f.weight, 0) - RISK_FREE_RATE)
+      / (result.funds.reduce((s, f) => s + f.beta * f.weight, 0) * MARKET_VOLATILITY)
+    : null;
+
+  const var95 = result
+    ? investmentAmount * result.funds.reduce((s, f) => s + f.beta * f.weight, 0) * MARKET_VOLATILITY * 1.645
+    : null;
+
   return (
     <motion.div
       style={{ position: "fixed", inset: 0, overflow: "hidden" }}
       animate={{ backgroundColor: SECTION_BGS[sectionIdx] }}
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
+      <AiHighlight
+        context={{
+          profile: profile ?? null,
+          portfolioInputs: {
+            tickers,
+            weights: preset?.tickers.join(" ") === tickerText.trim() ? preset.weights : undefined,
+            investmentAmount,
+            horizonYears,
+            riskTolerance,
+          },
+          portfolioResult: result,
+          riskMetrics: { sharpeRatio, var95 },
+          analytics: null,
+          currentScreen: SECTION_NAMES[sectionIdx] ?? "calculator",
+        }}
+      />
       <div
         style={{
           position: "fixed",

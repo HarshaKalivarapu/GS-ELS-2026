@@ -2,6 +2,8 @@ package com.gs.mutualfundcalc.controller;
 
 import com.gs.mutualfundcalc.dto.ai.PortfolioExplanationRequest;
 import com.gs.mutualfundcalc.dto.ai.PortfolioExplanationResponse;
+import com.gs.mutualfundcalc.dto.ai.SelectionExplanationRequest;
+import com.gs.mutualfundcalc.dto.ai.SelectionExplanationResponse;
 import com.gs.mutualfundcalc.service.AiExplanationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +32,21 @@ public class AiExplanationController {
         try {
             PortfolioExplanationResponse response =
                     aiExplanationService.generatePortfolioExplanation(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
+                    new ErrorResponse("AI explanation failed", e.getMessage())
+            );
+        }
+    }
+
+    @PostMapping("/explain-selection")
+    public ResponseEntity<?> explainSelection(
+            @RequestBody SelectionExplanationRequest request
+    ) {
+        try {
+            SelectionExplanationResponse response =
+                    aiExplanationService.generateSelectionExplanation(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(

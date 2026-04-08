@@ -2355,3 +2355,181 @@ textarea.form-input-clean {
     padding: 16px 24px 20px;
   }
 }
+
+/* ── AI Highlight: Floating Button ─────────────────────────────────── */
+
+.ai-highlight-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+  white-space: nowrap;
+  animation: aiHighlightFadeIn 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.ai-highlight-btn:hover {
+  background: #1d4ed8;
+  transform: scale(1.04);
+}
+
+@keyframes aiHighlightFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── AI Highlight: Popover ─────────────────────────────────────────── */
+
+.ai-highlight-popover {
+  width: 360px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 12px 48px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.06);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: aiPopoverIn 0.2s ease;
+}
+
+@keyframes aiPopoverIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ai-highlight-popover-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.ai-highlight-popover-close:hover {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.ai-highlight-quote {
+  font-size: 0.82rem;
+  color: #64748b;
+  font-style: italic;
+  line-height: 1.5;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-left: 3px solid #2563eb;
+  border-radius: 0 10px 10px 0;
+  word-break: break-word;
+}
+
+.ai-highlight-explanation {
+  font-size: 0.88rem;
+  color: #1e293b;
+  line-height: 1.65;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ai-highlight-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.ai-highlight-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(37, 99, 235, 0.2);
+  border-top-color: #2563eb;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-highlight-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-highlight-input {
+  flex: 1;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.ai-highlight-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.ai-highlight-input::placeholder {
+  color: #94a3b8;
+}
+
+.ai-highlight-input:disabled {
+  opacity: 0.5;
+}
+
+.ai-highlight-send {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  padding: 0;
+  border-radius: 9999px;
+  border: none;
+  background: #2563eb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.ai-highlight-send:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.ai-highlight-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .ai-highlight-btn,
+  .ai-highlight-popover {
+    display: none;
+  }
+}
