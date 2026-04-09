@@ -44,7 +44,7 @@ type Props = {
   activeTab: string;
   onTabChange: (t: string) => void;
   initialSection?: number;
-  onPortfolioSubmit?: (params: AnalyticsRequest) => void;
+  onPortfolioSubmit?: (params: AnalyticsRequest, result?: PortfolioRecommendation) => void;
   profile?: UserProfile | null;
 };
 
@@ -182,12 +182,10 @@ export default function Calculator({
       const data = (await res.json()) as PortfolioRecommendation;
       setResult(data);
 
-      onPortfolioSubmit?.({
-        tickers,
-        investmentAmount,
-        horizonYears,
-        riskTolerance,
-      });
+      onPortfolioSubmit?.(
+        { tickers, investmentAmount, horizonYears, riskTolerance },
+        data,
+      );
 
       setTimeout(() => goTo(2), 100);
     } catch (e: unknown) {

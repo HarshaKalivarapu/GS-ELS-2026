@@ -14,7 +14,10 @@ export type FundResult = {
   beta: number;
   expectedReturnRate: number;
   capmRate: number;
+  expenseRatio: number;
+  futureValueBeforeFees: number;
   futureValue: number;
+  feeImpact: number;
   futureValueAfterTax: number;
   taxOwed: number;
 };
@@ -22,6 +25,8 @@ export type FundResult = {
 export type PortfolioRecommendation = {
   funds: FundResult[];
   totalFutureValue: number;
+  totalFutureValueBeforeFees: number;
+  totalFeeImpact: number;
   totalFutureValueAfterTax: number;
   totalTaxOwed: number;
   taxRate: number;

@@ -133,8 +133,8 @@ export default function ResultsSection({
   }
 
   const chartData = buildChartData(result.funds, horizonYears);
-  const totalReturn = result.totalFutureValue - investmentAmount;
-  const totalReturnPct = ((totalReturn / investmentAmount) * 100).toFixed(1);
+  const grossReturn = result.totalFutureValueBeforeFees - investmentAmount;
+  const grossReturnPct = ((grossReturn / investmentAmount) * 100).toFixed(1);
   const afterTaxReturn = result.totalFutureValueAfterTax - investmentAmount;
   const afterTaxReturnPct = ((afterTaxReturn / investmentAmount) * 100).toFixed(1);
   const cagr = (
@@ -181,14 +181,19 @@ export default function ResultsSection({
                 </span>
               </div>
 
-              {/* Total return with tax breakdown */}
+              {/* Total return with fees + tax breakdown */}
               <div style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                 <span style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>
                   Total return
                 </span>
                 <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "#4ade80", letterSpacing: "-0.02em", display: "block" }}>
-                  +{fmt(totalReturn)} ({totalReturnPct}%)
+                  +{fmt(grossReturn)} ({grossReturnPct}%)
                 </span>
+                {result.totalFeeImpact > 0 && (
+                  <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "#fbbf24", letterSpacing: "-0.02em", display: "block", marginTop: 4 }}>
+                    −{fmt(result.totalFeeImpact)} (Fees)
+                  </span>
+                )}
                 <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "#f87171", letterSpacing: "-0.02em", display: "block", marginTop: 4 }}>
                   −{fmt(result.totalTaxOwed)} (Tax · {(result.taxRate * 100).toFixed(0)}%)
                 </span>
@@ -389,10 +394,15 @@ export default function ResultsSection({
 
               <div style={{ marginBottom: 8 }}>
                 <span style={{ fontSize: "1rem", fontWeight: 600, color: "rgba(255,255,255,0.55)", letterSpacing: "-0.02em", display: "block" }}>
-                  {fmt(fund.futureValue)}
+                  {fmt(fund.futureValueBeforeFees)}
                 </span>
+                {fund.feeImpact > 0 && (
+                  <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#fbbf24", display: "block", marginTop: 2 }}>
+                    −{fmt(fund.feeImpact)} (Fees)
+                  </span>
+                )}
                 <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#f87171", display: "block", marginTop: 2 }}>
-                  −{fmt(fund.taxOwed)}
+                  −{fmt(fund.taxOwed)} (Tax)
                 </span>
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", margin: "4px 0", width: 100 }} />
                 <span style={{ fontSize: "1.3rem", fontWeight: 800, color: "#4ade80", letterSpacing: "-0.02em", display: "block" }}>

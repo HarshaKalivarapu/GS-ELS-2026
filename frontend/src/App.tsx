@@ -3,7 +3,7 @@ import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/c
 import "./App.css";
 import Calculator from "./components/Calculator";
 import Analytics from "./components/Analytics";
-import type { AnalyticsRequest } from "./types";
+import type { AnalyticsRequest, PortfolioRecommendation } from "./types";
 import type { UserProfile } from "./types/profile";
 
 import { getProfile } from "./services/profileService";
@@ -59,6 +59,8 @@ export default function App() {
   const [calcInitialSection, setCalcInitialSection] = useState(0);
   const [analyticsParams, setAnalyticsParams] =
     useState<AnalyticsRequest>(DEFAULT_ANALYTICS);
+  const [portfolioResult, setPortfolioResult] =
+    useState<PortfolioRecommendation | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
@@ -87,8 +89,9 @@ export default function App() {
     setActiveTab(t as "calculator" | "advanced");
   };
 
-  const handlePortfolioSubmit = (params: AnalyticsRequest) => {
+  const handlePortfolioSubmit = (params: AnalyticsRequest, result?: PortfolioRecommendation) => {
     setAnalyticsParams(params);
+    if (result) setPortfolioResult(result);
   };
 
   if (!isLoaded) {
@@ -145,6 +148,7 @@ export default function App() {
                   onTabChange={handleTabChange}
                   analyticsParams={analyticsParams}
                   profile={isSignedIn ? profile : null}
+                  portfolioResult={portfolioResult}
                 />
               </div>
             )}

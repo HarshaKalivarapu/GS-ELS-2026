@@ -6,11 +6,13 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
 import type {
   AnalyticsRequest,
+  PortfolioRecommendation,
   MonteCarloPoint,
   ScenarioResult,
   StressEventResult,
@@ -23,7 +25,27 @@ type Props = {
   onTabChange: (t: string) => void;
   analyticsParams: AnalyticsRequest;
   profile?: UserProfile | null;
+  portfolioResult?: PortfolioRecommendation | null;
 };
+
+function buildFeeChartData(
+  result: PortfolioRecommendation,
+  horizonYears: number
+): { year: string; withFees: number; withoutFees: number }[] {
+  const points: { year: string; withFees: number; withoutFees: number }[] = [];
+  for (let y = 0; y <= horizonYears; y++) {
+    let withFees = 0;
+    let withoutFees = 0;
+    for (const fund of result.funds) {
+      const grossRate = fund.capmRate > 0 ? fund.capmRate : fund.expectedReturnRate;
+      const netRate = grossRate - fund.expenseRatio;
+      withoutFees += fund.principal * Math.pow(1 + grossRate, y);
+      withFees += fund.principal * Math.pow(1 + netRate, y);
+    }
+    points.push({ year: `Y${y}`, withFees: Math.round(withFees), withoutFees: Math.round(withoutFees) });
+  }
+  return points;
+}
 
 function pct(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
@@ -60,7 +82,7 @@ function buildStressExplanation(event: StressEventResult): string {
   )}, which highlights the gap between expected compounding and realized crisis behavior.`;
 }
 
-export default function Analytics({ onTabChange, analyticsParams, profile }: Props) {
+export default function Analytics({ onTabChange, analyticsParams, profile, portfolioResult }: Props) {
   const [mcData, setMcData] = useState<MonteCarloPoint[]>([]);
   const [scenarios, setScenarios] = useState<ScenarioResult[]>([]);
   const [stressEvents, setStressEvents] = useState<StressEventResult[]>([]);
@@ -93,6 +115,13 @@ export default function Analytics({ onTabChange, analyticsParams, profile }: Pro
       })
       .finally(() => setLoading(false));
   }, [analyticsParams]);
+
+  const feeChartData = useMemo(() => {
+    if (!portfolioResult) return null;
+    return buildFeeChartData(portfolioResult, analyticsParams.horizonYears);
+  }, [portfolioResult, analyticsParams.horizonYears]);
+
+  const totalFeeImpact = portfolioResult?.totalFeeImpact ?? 0;
 
   const stressExplanationBody = useMemo(() => {
     if (!selectedStressEvent) return "";
@@ -254,6 +283,161 @@ export default function Analytics({ onTabChange, analyticsParams, profile }: Pro
             )}
           </div>
         </div>
+
+        {feeChartData && (
+          <div style={{ marginTop: 56 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.12 }}
+              style={{ marginBottom: 24 }}
+            >
+              <p className="section-eyebrow-blue">Expense Ratio Impact</p>
+              <h3
+                style={{
+                  margin: "0 0 10px",
+                  fontSize: "2rem",
+                  lineHeight: 1.1,
+                  color: "#0f172a",
+                }}
+              >
+                How fees erode your returns
+              </h3>
+              <p className="section-subtext-muted" style={{ maxWidth: 620 }}>
+                Compares portfolio growth with and without expense ratios over your
+                {" "}{analyticsParams.horizonYears}-year horizon. Total fee drag:{" "}
+                <strong style={{ color: "#f59e0b" }}>{usd(totalFeeImpact)}</strong>.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.18 }}
+              style={{
+                background: "#ffffff",
+                borderRadius: 24,
+                border: "1px solid rgba(15,23,42,0.06)",
+                boxShadow: "0 18px 48px rgba(15,23,42,0.06)",
+                padding: 24,
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  height: 300,
+                  background: "#f8fafc",
+                  borderRadius: 20,
+                  padding: 16,
+                }}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={feeChartData} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
+                    <XAxis
+                      dataKey="year"
+                      tick={{ fontSize: 11, fill: "#94a3b8" }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tickFormatter={(v) =>
+                        v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`
+                      }
+                      tick={{ fontSize: 11, fill: "#94a3b8" }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={54}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "#ffffff",
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        borderRadius: 12,
+                        fontSize: 12,
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                      }}
+                      formatter={(value, name) => [
+                        typeof value === "number" ? usd(value) : String(value ?? ""),
+                        name === "withoutFees" ? "Without Fees" : "With Fees",
+                      ]}
+                      labelFormatter={(l) => String(l)}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: 12, color: "#64748b" }}
+                      formatter={(value) =>
+                        value === "withoutFees" ? "Without Fees" : "With Fees"
+                      }
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="withoutFees"
+                      stroke="#22c55e"
+                      strokeWidth={2.5}
+                      dot={false}
+                      name="withoutFees"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="withFees"
+                      stroke="#f59e0b"
+                      strokeWidth={2.5}
+                      dot={false}
+                      strokeDasharray="6 3"
+                      name="withFees"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: 14,
+                  marginTop: 18,
+                }}
+              >
+                {portfolioResult!.funds.map((fund) => (
+                  <div
+                    key={fund.ticker}
+                    style={{ background: "#f8fafc", borderRadius: 18, padding: 18 }}
+                  >
+                    <div
+                      style={{
+                        color: "#94a3b8",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        letterSpacing: "0.08em",
+                      }}
+                    >
+                      {fund.ticker} · {(fund.expenseRatio * 100).toFixed(2)}% ER
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: "1.4rem",
+                        fontWeight: 800,
+                        color: "#f59e0b",
+                      }}
+                    >
+                      −{usd(fund.feeImpact)}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 4,
+                        fontSize: "0.85rem",
+                        color: "#94a3b8",
+                      }}
+                    >
+                      fee drag over {analyticsParams.horizonYears} yrs
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
 
         <div style={{ marginTop: 64 }}>
           <motion.div

@@ -69,10 +69,20 @@ public class PortfolioService {
 
             double beta = marketDataService.fetchBeta(normalizedTicker);
             double expectedReturn = marketDataService.fetchAnnualReturn(normalizedTicker);
+            double expenseRatio = marketDataService.fetchFundInfo(normalizedTicker).expenseRatio();
 
             double capmRate = riskFreeRate + beta * (expectedReturn - riskFreeRate);
-            double fv = principal * Math.exp(capmRate * years);
 
+            // Future value before fees (gross CAPM growth)
+            double fvBeforeFees = principal * Math.exp(capmRate * years);
+
+            // Future value after fees (expense ratio reduces the effective rate)
+            double effectiveRate = capmRate - expenseRatio;
+            double fv = principal * Math.exp(effectiveRate * years);
+
+            double feeImpact = fvBeforeFees - fv;
+
+            // Tax is applied to profit after fees
             double gain = Math.max(0, fv - principal);
             double taxOwed = gain * taxRate;
             double fvAfterTax = fv - taxOwed;
@@ -84,14 +94,25 @@ public class PortfolioService {
                     beta,
                     expectedReturn,
                     capmRate,
+                    expenseRatio,
+                    fvBeforeFees,
                     fv,
+                    feeImpact,
                     fvAfterTax,
                     taxOwed
             );
         }).toList();
 
+        double totalFVBeforeFees = results.stream()
+                .mapToDouble(PortfolioRecommendation.FundResult::futureValueBeforeFees)
+                .sum();
+
         double totalFV = results.stream()
                 .mapToDouble(PortfolioRecommendation.FundResult::futureValue)
+                .sum();
+
+        double totalFeeImpact = results.stream()
+                .mapToDouble(PortfolioRecommendation.FundResult::feeImpact)
                 .sum();
 
         double totalFVAfterTax = results.stream()
@@ -106,7 +127,7 @@ public class PortfolioService {
                 "Portfolio uses preset or risk-based allocation instead of equal weighting. " +
                 "Returns calculated using CAPM and continuous compounding.";
 
-        return new PortfolioRecommendation(results, totalFV, totalFVAfterTax, totalTaxOwed, taxRate, explanation);
+        return new PortfolioRecommendation(results, totalFV, totalFVBeforeFees, totalFeeImpact, totalFVAfterTax, totalTaxOwed, taxRate, explanation);
     }
 
     /**
