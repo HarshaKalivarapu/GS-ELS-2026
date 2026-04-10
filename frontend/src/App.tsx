@@ -67,16 +67,13 @@ export default function App() {
 
       if (!isSignedIn || !user) {
         setProfile(null);
-        setProfileLoading(false);
         return;
       }
 
       try {
-        setProfileLoading(true);
         const p = await getProfile(user.id);
         setProfile(p);
       } finally {
-        setProfileLoading(false);
       }
     }
 
