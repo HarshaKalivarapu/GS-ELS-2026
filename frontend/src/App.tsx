@@ -52,7 +52,6 @@ export default function App() {
   const { isLoaded, isSignedIn, user } = useUser();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
 
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"calculator" | "advanced">("calculator");
